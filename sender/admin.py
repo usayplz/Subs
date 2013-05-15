@@ -30,7 +30,6 @@ class SMSTaskAdmin(admin.ModelAdmin):
 
 
 class SMSTextAdmin(admin.ModelAdmin):
-    list_display = ('sms_text', 'mailing', 'from_date', 'to_date', )
     class Meta:
         model = SMSText
 
@@ -40,4 +39,3 @@ admin.site.register(Mailing, MailingAdmin)
 admin.site.register(Subscriber, SubscriberAdmin)
 admin.site.register(SMSTask, SMSTaskAdmin)
 admin.site.register(SMSText, SMSTextAdmin)
-
