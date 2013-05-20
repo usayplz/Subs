@@ -16,9 +16,7 @@ class SMPP(object):
     @defer.inlineCallbacks
     def run(self):
         try:
-            #Bind
             smpp = yield SMPPClientTransceiver(self.config, self.handleMsg).connectAndBind()
-            #Wait for disconnect
             yield smpp.getDisconnectedDeferred()
         except Exception, e:
             print "ERROR: %s" % str(e)
@@ -26,9 +24,6 @@ class SMPP(object):
             reactor.stop()
 
     def handleMsg(self, smpp, pdu):
-        """
-        NOTE: you can return a Deferred here
-        """
         print "Received pdu %s" % pdu
 
 if __name__ == '__main__':
