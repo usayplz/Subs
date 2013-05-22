@@ -5,7 +5,7 @@
 Returns current conditions, forecast and alerts from wunderground.com.
 """
 
-import sys, logging, urllib
+import sys, urllib
 from xml.etree import ElementTree as ET
 
 
@@ -31,14 +31,14 @@ class WundergroundWather():
             self.wind_direction = current_observation.find('wind_dir').text
             self.wind_speed = current_observation.find('wind_kph').text
 
-        self.wind_direction = self.convert_wind_en2ru(self.wind_direction)
-        self.wind_speed = self.kph2mps(self.wind_speed)
+        self.wind_direction = self._convert_wind_en2ru(self.wind_direction)
+        self.wind_speed = self._kph2mps(self.wind_speed)
     
-    def kph2mps(self, value):
+    def _kph2mps(self, value):
         """convert kilometer per hour to meter per second"""
         return int(value)*1000/3600
 
-    def convert_wind_en2ru(self, value):
+    def _convert_wind_en2ru(self, value):
         dict_enru_wind_direction = {
             'East'  :   u'восточный',
             'ENE'   :   u'северо-восточный',
