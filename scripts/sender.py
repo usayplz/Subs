@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import logging
 from twisted.internet import reactor, defer
@@ -32,20 +33,21 @@ class SMPP(object):
             reactor.stop()
 
     def handleMsg(self, smpp, pdu):
-        print "Received pdu: %s" % pdu
+        #print "Received pdu: %s" % pdu
 
         if pdu.commandId == CommandId.deliver_sm:
-            smpp.sendDataRequest(DeliverSMResp())
+            #smpp.sendDataRequest(DeliverSMResp(pdu.seqNum))
 
-            short_message = pdu.params['short_message'].decode('utf_16_be')+u''
-            print "DEBUG:: %s" % short_message
+            short_message = pdu.params.get('short_message', '').decode('utf_16_be')+u''
+            print "DEBUG! short_message: %s" % short_message
 
-            if pdu.params['message_state'] == MessageState.DELIVERED:
-                pass
+            if pdu.params.get('message_state', None) == MessageState.DELIVERED:
+                print "=============DEBUG============ %s" % pdu.params.get('message_state', None)
             else:
-                self.send_sms(pdu.params['source_addr'], 'test')
+                seq = self.send_sms(smpp, pdu.params['source_addr'], u'цук'.encode('utf_16_be'))
+                print "=============DEBUG============ seq=%s" % seq
 
-    def send_sms(self, source_addr, short_message):
+    def send_sms(self, smpp, source_addr, short_message):
         """params:
             report: on
             encoding: UCS2
@@ -62,12 +64,12 @@ class SMPP(object):
             registered_delivery=RegisteredDelivery(
                 RegisteredDeliveryReceipt.SMSC_DELIVERY_RECEIPT_REQUESTED),
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
-            data_coding=DataCoding(DataCodingDefault.UCS2),
+            data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
-        return self.smpp.sendDataRequest(submit_pdu)
+        return smpp.sendDataRequest(submit_pdu)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     SMPP().run()
     reactor.run()
