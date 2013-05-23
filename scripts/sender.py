@@ -35,23 +35,28 @@ class SMPP(object):
     def handleMsg(self, smpp, pdu):
         #print "Received pdu: %s" % pdu
 
+        # some variables
+        source_addr = pdu.params.get('source_addr', '')
+        short_message = pdu.params.get('short_message', '')
+        message_state = pdu.params.get('message_state', None)
+
         if pdu.commandId == CommandId.deliver_sm:
-            #smpp.sendDataRequest(DeliverSMResp(pdu.seqNum))
-
-            short_message = pdu.params.get('short_message', '').decode('utf_16_be')+u''
-            print "DEBUG! short_message: %s" % short_message
-
-            if pdu.params.get('message_state', None) == MessageState.DELIVERED:
-                print "=============DEBUG============ %s" % pdu.params.get('message_state', None)
+            if message_state == MessageState.DELIVERED:
+                print "=============DEBUG============ %s" % message_state
             else:
-                seq = self.send_sms(smpp, pdu.params['source_addr'], u'цук'.encode('utf_16_be'))
+                short_message = short_message.decode('utf_16_be')
+                seq = self.send_sms(smpp, source_addr, u'цук')
                 print "=============DEBUG============ seq=%s" % seq
+                # add2db
+
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
             report: on
             encoding: UCS2
         """
+        short_message = short_message.encode('utf_16_be')
+
         submit_pdu = SubmitSM(
             source_addr=self.esme_num,
             destination_addr=source_addr,

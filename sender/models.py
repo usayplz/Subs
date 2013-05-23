@@ -59,6 +59,7 @@ class SMSTask(models.Model):
     delivery_date = models.DateTimeField(_(u'Дата доставки'), default=datetime.now)
     sent_date = models.DateTimeField(_(u'Дата отправки'), null=True, blank=True)
     status = models.SmallIntegerField(_(u'Статус'), choices=SMS_STATUSES, default=0)
+    message_id = models.IntegerField(_(u'Номер сообщения'), default=0)
 
     def __unicode__(self):
         return self.mobnum
