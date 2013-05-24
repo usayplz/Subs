@@ -4,10 +4,9 @@
 from wunderground import WundergroundWather
 import sqlite3 as db
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
-
-def insert_weather(weather, mailing_id):
+def insert_weather(weather, mailing_id, timeout):
     sql = '''
         insert into sender_smstext 
             (sms_text, mailing_id, from_date, to_date) 
@@ -20,8 +19,8 @@ def insert_weather(weather, mailing_id):
         cursor.execute(sql, { 
             "sms_text": weather,
             "mailing_id": mailing_id, 
-            "from_date": '2013-05-20 03:04:05', 
-            "to_date": '2013-05-21 03:04:05'
+            "from_date": str(datetime.utcnow()), 
+            "to_date": str(datetime.utcnow()+timedelta(seconds=timeout)),
         })
         connection.commit()
         connection.close()
@@ -34,8 +33,9 @@ def main(argv=None):
     mailing_id = 1
     key = "b5720198c3228276"
     location = "Irkutsk"
+    timeout = 15*60
     weather = WundergroundWather(key, location)
-    return insert_weather(unicode(weather), mailing_id)
+    return insert_weather(unicode(weather), mailing_id, timeout)
 
 if __name__ == "__main__":
     sys.exit(main())
