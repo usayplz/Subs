@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sqlite3 as db
+import MySQLdb as db
 import logging, time
 from datetime import datetime
 from wunderground import WundergroundWather
@@ -27,11 +27,11 @@ class dbSMSTask(object):
     def connect(self):
         try:
             self.connection = db.connect(
-                host=self.db_config.get('host'), 
+                host=self.db_config.get('host'),
                 user=self.db_config.get('user'), 
                 passwd=self.db_config.get('passwd'), 
                 db=self.db_config.get('db'), 
-                charset='utf8'
+                charset='utf8',
             )
             self.cursor = self.connection.cursor()
             self.connection_state = 1
@@ -47,18 +47,18 @@ class dbSMSTask(object):
             self.add_weather()
 
         sql = '''
-            insert into sender_smstask 
+            insert into sender_smstask
                 (mobnum, sms_text, delivery_date, status, message_id)
-            values 
-                (:mobnum, :sms_text, :delivery_date, :status, :message_id)
+            values
+                (%(mobnum)s, %(sms_text)s, %(delivery_date)s, %(status)s, %(message_id)s)
         '''
         try:
             self.cursor.execute(sql, {
-                "mobnum": mobnum,
-                "sms_text": self.weather,
-                "delivery_date": str(datetime.utcnow()),
-                "status": status,
-                "message_id": message_id,
+                'mobnum': mobnum,
+                'sms_text': self.weather,
+                'delivery_date': str(datetime.utcnow()),
+                'status': status,
+                'message_id': message_id,
             })
             self.connection.commit()
         except db.Error, e:
@@ -68,8 +68,8 @@ class dbSMSTask(object):
     def update_task_status(self, status, message_id):
         sql = '''
             update sender_smstask
-            set status = :status
-            where message_id = :message_id
+            set status = %(status)s
+            where message_id = %(message_id)s
         '''
         try:
             self.cursor.execute(sql, { 
@@ -86,13 +86,13 @@ class dbSMSTask(object):
             insert into sender_smstext 
                 (sms_text, mailing_id, from_date) 
             values 
-                (:sms_text, :mailing_id, :from_date)
+                (%(sms_text)s, %(mailing_id)s, %(from_date)s)
         '''
         try:
             self.cursor.execute(sql, { 
-                "sms_text": self.weather,
-                "mailing_id": self.MAILING, 
-                "from_date": str(datetime.utcnow()), 
+                'sms_text': self.weather,
+                'mailing_id': self.MAILING, 
+                'from_date': datetime.utcnow(), 
             })
             self.connection.commit()
         except db.Error, e:
@@ -104,8 +104,9 @@ def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
-    tasker = dbSMSTask('../local.db')
-    # tasker.add_new_task('9021702030', 123456)
+    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
+    tasker = dbSMSTask(db_config)
+    tasker.add_new_task('9021702030', 123456)
 
 if __name__ == '__main__':
     main()

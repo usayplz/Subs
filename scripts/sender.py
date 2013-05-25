@@ -18,18 +18,18 @@ class SMPP(object):
     DEST_ADDR_NPI = AddrNpi.ISDN
 
 
-    def __init__(self, smpp_config=None, db_config):
+    def __init__(self, smpp_config=None, db_config=None):
         if smpp_config is None:
             smpp_config = SMPPClientConfig(
                 host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
-        
+
         self.smpp_config = smpp_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
 
     @defer.inlineCallbacks
     def run(self):
         try:
-            smpp = yield SMPPClientTransceiver(self.config, self.handleMsg).connectAndBind()
+            smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             yield smpp.getDisconnectedDeferred()
         except Exception, e:
             print "ERROR: %s" % str(e)
@@ -79,6 +79,6 @@ class SMPP(object):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    db_config = {host:"localhost", user: "subs", passwd: 'njH(*DHWH2)', db: "subsdb"}
+    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     SMPP(db_config=db_config).run()
     reactor.run()
