@@ -40,7 +40,7 @@ class dbSMSTask(object):
             print e
 
     def add_new_task(self, mobnum, message_id):
-        status = 0
+        status = 1
         if not self.weather or time.time()-self.weather_timer > self.WEATHER_TIMEOUT:
             self.weather = unicode(WundergroundWather(self.KEY, self.LOCATION))
             self.weather_timer = time.time()
@@ -65,16 +65,17 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
-    def update_task_status(self, status, message_id):
+    def update_task_status(self, status, task_id='', message_id=''):
         sql = '''
             update sender_smstask
             set status = %(status)s
-            where message_id = %(message_id)s
+            where message_id = %(message_id)s or id = %(task_id)s
         '''
         try:
             self.cursor.execute(sql, { 
                 "status": status,
                 "mailing_id": mailing_id,
+                "task_id": task_id,
             })
             self.connection.commit()
         except db.Error, e:
@@ -99,6 +100,24 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
+    def add_weather(self):
+        sql = '''
+            select
+                id, mobnum, sms_text
+            from 
+                sender_smstask
+            where
+                status = 0
+                and delivery_date >= NOW()
+        '''
+        try:
+            self.cursor.execute(sql, {})
+        except db.Error, e:
+            self.connection_state = 0
+            print e
+            return None
+
+        return self.cursor.fetchall()
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)

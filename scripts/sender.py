@@ -9,6 +9,7 @@ from smpp.pdu.error import *
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask
+import time
 
 
 class SMPP(object):
@@ -29,8 +30,15 @@ class SMPP(object):
     @defer.inlineCallbacks
     def run(self):
         try:
-            smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-            yield smpp.getDisconnectedDeferred()
+            self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
+
+            while True:
+                tasks = self.smstask.check_tasks()
+                if tasks is not None:
+                    self.send_all(tasks)
+                time.sleep(60)
+
+            yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             print "ERROR: %s" % str(e)
         finally:
@@ -46,14 +54,14 @@ class SMPP(object):
 
         if pdu.commandId == CommandId.deliver_sm:
             if message_state == MessageState.DELIVERED:
-                print "=============DEBUG============ %s" % message_state
+                pass
             else:
                 short_message = short_message.decode('utf_16_be')
                 self.smstask.add_new_task(source_addr, pdu.seqNum)
-                d = self.send_sms(smpp, source_addr, self.smstask.weather)
-                # d.addBoth(self.)
+                defer = self.send_sms(source_addr, self.smstask.weather)
+                # defer.addBoth(self.)
 
-    def send_sms(self, smpp, source_addr, short_message):
+    def send_sms(self, source_addr, short_message):
         """params:
             report: on
             encoding: UCS2
@@ -74,7 +82,14 @@ class SMPP(object):
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
-        return smpp.sendDataRequest(submit_pdu)
+        return self.smpp.sendDataRequest(submit_pdu)
+
+    def send_all(self, tasks):
+        for task in tasks:
+            id, mobnum, sms_text = task
+            self.smstask.update_task_status(1, id, '')
+            defer = self.send_sms(mobnum, sms_text)
+
 
 
 if __name__ == '__main__':
