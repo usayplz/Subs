@@ -4,53 +4,47 @@
 import sqlite3 as db
 import logging, time
 from datetime import datetime
+from wunderground import WundergroundWather
 
 class dbSMSTask(object):
-    connection = None
-    connection_state = 0
-    cursor = None
-    weather = None
-    weather_time = 0
-    weather_timeout = 15*60
+    WEATHER_TIMEOUT = 15*60
+    MAILING = 1
+    KEY = 'b5720198c3228276'
+    LOCATION = 'Irkutsk'
 
-    def __init__(self, connection_string):
+    def __init__(self, db_config):
+        self.db_config = db_config
         self.connection_state = 0
-        self.connect(connection_string)
+        self.connect()
+        self.weather = ''
+        self.connection_state = 0
+        self.weather_timer = 0
 
     def __del__(self):
         self.connection.commit()
         self.connection.close()
 
-    def connect(self, connection_string):
+    def connect(self):
         try:
-            self.connection = db.connect(connection_string)
+            self.connection = db.connect(
+                host=self.db_config.get('host'), 
+                user=self.db_config.get('user'), 
+                passwd=self.db_config.get('passwd'), 
+                db=self.db_config.get('db'), 
+                charset='utf8'
+            )
             self.cursor = self.connection.cursor()
             self.connection_state = 1
         except db.Error, e:
             self.connection_state = 0
             print e
 
-    def set_weather(self):
-        sql = '''
-            select sms_text, from_date from sender_smstext order by from_date desc limit 1
-        '''
-        try:
-            self.cursor.execute(sql, {})
-            results = self.cursor.fetchall()
-            if results:
-                self.weather = results[0][0]
-            else:
-                self.weather = ''
-        except db.Error, e:
-            self.connection_state = 0
-            print e
-           
-    
     def add_new_task(self, mobnum, message_id):
         status = 0
-        if not self.weather or time.time()-self.weather_time > self.weather_timeout:
-            self.set_weather()
-            self.weather_time = time.time()
+        if not self.weather or time.time()-self.weather_timer > self.WEATHER_TIMEOUT:
+            self.weather = unicode(WundergroundWather(self.KEY, self.LOCATION))
+            self.weather_timer = time.time()
+            self.add_weather()
 
         sql = '''
             insert into sender_smstask 
@@ -87,11 +81,31 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
+    def add_weather(self):
+        sql = '''
+            insert into sender_smstext 
+                (sms_text, mailing_id, from_date) 
+            values 
+                (:sms_text, :mailing_id, :from_date)
+        '''
+        try:
+            self.cursor.execute(sql, { 
+                "sms_text": self.weather,
+                "mailing_id": self.MAILING, 
+                "from_date": str(datetime.utcnow()), 
+            })
+            self.connection.commit()
+        except db.Error, e:
+            self.connection_state = 0
+            print e
+
 
 def main(args=None):
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
     tasker = dbSMSTask('../local.db')
-    tasker.add_new_task('9021702030', 123456)
+    # tasker.add_new_task('9021702030', 123456)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
     main()

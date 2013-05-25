@@ -14,7 +14,7 @@ class WundergroundWather():
 
     def __init__(self, key, location):
         try:
-            proxies = {'http': 'http://proxy.bwc.ru:3128'}
+            # proxies = {'http': 'http://proxy.bwc.ru:3128'}
             current_conditions = 'http://api.wunderground.com/api/%s/conditions/lang:RU/q/Russia/%s.xml' % (key, location)
             urllib.socket.setdefaulttimeout(8)
             usock = urllib.urlopen(current_conditions, proxies=proxies)

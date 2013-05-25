@@ -8,19 +8,23 @@ from smpp.twisted.config import SMPPClientConfig
 from smpp.pdu.error import *
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
+import dbsmstask
 
 
 class SMPP(object):
-    esme_num = '8181'
-    source_addr_ton = AddrTon.ALPHANUMERIC
-    dest_addr_ton = AddrTon.INTERNATIONAL
-    dest_addr_npi = AddrNpi.ISDN
+    ESME_NUM = '8181'
+    SOURCE_ADDR_TON = AddrTon.ALPHANUMERIC
+    DEST_ADDR_TON = AddrTon.INTERNATIONAL
+    DEST_ADDR_NPI = AddrNpi.ISDN
 
-    def __init__(self, config=None):
-        if config is None:
-            config = SMPPClientConfig(
+
+    def __init__(self, smpp_config=None, db_config):
+        if smpp_config is None:
+            smpp_config = SMPPClientConfig(
                 host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
-        self.config = config
+        
+        self.smpp_config = smpp_config
+        self.smstask = dbsmstask.dbSMSTask(db_config)
 
     @defer.inlineCallbacks
     def run(self):
@@ -45,10 +49,9 @@ class SMPP(object):
                 print "=============DEBUG============ %s" % message_state
             else:
                 short_message = short_message.decode('utf_16_be')
-                seq = self.send_sms(smpp, source_addr, u'цук')
-                print "=============DEBUG============ seq=%s" % seq
-                # add2db
-
+                self.smstask.add_new_task(source_addr, pdu.seqNum)
+                d = self.send_sms(smpp, source_addr, self.smstask.weather)
+                # d.addBoth(self.)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -58,12 +61,12 @@ class SMPP(object):
         short_message = short_message.encode('utf_16_be')
 
         submit_pdu = SubmitSM(
-            source_addr=self.esme_num,
+            source_addr=self.ESME_NUM,
             destination_addr=source_addr,
             short_message=short_message,
-            source_addr_ton=self.source_addr_ton,
-            dest_addr_ton=self.dest_addr_ton,
-            dest_addr_npi=self.dest_addr_npi,
+            source_addr_ton=self.SOURCE_ADDR_TON,
+            dest_addr_ton=self.DEST_ADDR_TON,
+            dest_addr_npi=self.DEST_ADDR_NPI,
             esm_class=EsmClass(EsmClassMode.DEFAULT, EsmClassType.DEFAULT),
             protocol_id=0,
             registered_delivery=RegisteredDelivery(
@@ -76,5 +79,6 @@ class SMPP(object):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    SMPP().run()
+    db_config = {host:"localhost", user: "subs", passwd: 'njH(*DHWH2)', db: "subsdb"}
+    SMPP(db_config=db_config).run()
     reactor.run()

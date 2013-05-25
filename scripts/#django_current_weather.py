@@ -31,9 +31,9 @@ def insert_weather(weather, mailing_id, timeout):
 
 def main(argv=None):
     mailing_id = 1
+    timeout = 15*60
     key = "b5720198c3228276"
     location = "Irkutsk"
-    timeout = 15*60
     weather = WundergroundWather(key, location)
     return insert_weather(unicode(weather), mailing_id, timeout)
 
