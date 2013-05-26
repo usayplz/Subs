@@ -25,7 +25,6 @@ class SMPP(object):
 
         self.smpp_config = smpp_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
-        #self.submitSMDeferred = defer.Deferred()
 
     @defer.inlineCallbacks
     def run(self):
@@ -75,23 +74,23 @@ class SMPP(object):
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
-        return smpp.sendDataRequest(submit_pdu).chainDeferred(self.submitSMDeferred)
+        d = smpp.sendDataRequest(submit_pdu)
+        d.addBoth(self.message_sent)
+
+    def message_sent(self,*args,**kwargs):
+        for arg in args:
+            print "another arg:", arg
 
     def send_all(self):
         print "RUN! send_all"
         tasks = self.smstask.check_tasks()
-        if tasks is not None:
-            for task in tasks:
-                id, mobnum, sms_text = task
-                print "ID! %s" %id
-#                self.smstask.update_task_status(1, id, '')
-#                reactor.callLater(0, self.send_sms, self.smpp, mobnum, unicode(sms_text))
-                self.send_sms(self.smpp, mobnum, unicode(sms_text)+u'')
-#                time.sleep(1)
+        for task in tasks:
+            id, mobnum, sms_text = task
+            self.smstask.update_task_status(1, id, '')
+            self.send_sms(self.smpp, mobnum, unicode(sms_text)+u'')
 
 
 def check_tasks(cSMPP):
-    print "RUN! check_task"
     cSMPP.send_all()
     reactor.callLater(60, check_tasks, cSMPP)
 
