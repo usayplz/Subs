@@ -11,7 +11,6 @@ from smpp.pdu.pdu_types import *
 import dbsmstask
 import time
 
-
 class SMPP(object):
     ESME_NUM = '8181'
     SOURCE_ADDR_TON = AddrTon.ALPHANUMERIC
@@ -26,18 +25,12 @@ class SMPP(object):
 
         self.smpp_config = smpp_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
+        #self.submitSMDeferred = defer.Deferred()
 
     @defer.inlineCallbacks
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-
-            while True:
-                tasks = self.smstask.check_tasks()
-                if tasks is not None:
-                    self.send_all(tasks)
-                time.sleep(60)
-
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             print "ERROR: %s" % str(e)
@@ -58,10 +51,10 @@ class SMPP(object):
             else:
                 short_message = short_message.decode('utf_16_be')
                 self.smstask.add_new_task(source_addr, pdu.seqNum)
-                defer = self.send_sms(source_addr, self.smstask.weather)
+                self.send_sms(smpp, source_addr, self.smstask.weather)
                 # defer.addBoth(self.)
 
-    def send_sms(self, source_addr, short_message):
+    def send_sms(self, smpp, source_addr, short_message):
         """params:
             report: on
             encoding: UCS2
@@ -82,18 +75,31 @@ class SMPP(object):
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
-        return self.smpp.sendDataRequest(submit_pdu)
+        return smpp.sendDataRequest(submit_pdu).chainDeferred(self.submitSMDeferred)
 
-    def send_all(self, tasks):
-        for task in tasks:
-            id, mobnum, sms_text = task
-            self.smstask.update_task_status(1, id, '')
-            defer = self.send_sms(mobnum, sms_text)
+    def send_all(self):
+        print "RUN! send_all"
+        tasks = self.smstask.check_tasks()
+        if tasks is not None:
+            for task in tasks:
+                id, mobnum, sms_text = task
+                print "ID! %s" %id
+#                self.smstask.update_task_status(1, id, '')
+#                reactor.callLater(0, self.send_sms, self.smpp, mobnum, unicode(sms_text))
+                self.send_sms(self.smpp, mobnum, unicode(sms_text)+u'')
+#                time.sleep(1)
 
+
+def check_tasks(cSMPP):
+    print "RUN! check_task"
+    cSMPP.send_all()
+    reactor.callLater(60, check_tasks, cSMPP)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
-    SMPP(db_config=db_config).run()
+    cSMPP = SMPP(db_config=db_config)
+    cSMPP.run()
+    reactor.callLater(5, check_tasks, cSMPP)
     reactor.run()

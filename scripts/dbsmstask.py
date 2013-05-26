@@ -56,7 +56,7 @@ class dbSMSTask(object):
             self.cursor.execute(sql, {
                 'mobnum': mobnum,
                 'sms_text': self.weather,
-                'delivery_date': str(datetime.utcnow()),
+                'delivery_date': datetime.utcnow(),
                 'status': status,
                 'message_id': message_id,
             })
@@ -74,7 +74,7 @@ class dbSMSTask(object):
         try:
             self.cursor.execute(sql, { 
                 "status": status,
-                "mailing_id": mailing_id,
+                "message_id": message_id,
                 "task_id": task_id,
             })
             self.connection.commit()
@@ -100,7 +100,7 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
-    def add_weather(self):
+    def check_tasks(self):
         sql = '''
             select
                 id, mobnum, sms_text
@@ -108,7 +108,7 @@ class dbSMSTask(object):
                 sender_smstask
             where
                 status = 0
-                and delivery_date >= NOW()
+                and delivery_date <= NOW()
         '''
         try:
             self.cursor.execute(sql, {})
