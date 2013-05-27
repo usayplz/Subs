@@ -16,6 +16,7 @@ class dbSMSTask(object):
         self.db_config = db_config
         self.connection_state = 0
         self.connect()
+
         self.weather = ''
         self.connection_state = 0
         self.weather_timer = 0
@@ -115,7 +116,7 @@ class dbSMSTask(object):
         except db.Error, e:
             self.connection_state = 0
             print e
-            return None
+            return []
 
         return self.cursor.fetchall()
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import logging
 from twisted.internet import reactor, defer
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
@@ -9,7 +10,6 @@ from smpp.pdu.error import *
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask
-import time
 
 class SMPP(object):
     ESME_NUM = '8181'
@@ -86,8 +86,9 @@ class SMPP(object):
         tasks = self.smstask.check_tasks()
         for task in tasks:
             id, mobnum, sms_text = task
+            sms_text = unicode(sms_text + u'')
+            self.send_sms(self.smpp, mobnum, sms_text)
             self.smstask.update_task_status(1, id, '')
-            self.send_sms(self.smpp, mobnum, unicode(sms_text)+u'')
 
 
 def check_tasks(cSMPP):
