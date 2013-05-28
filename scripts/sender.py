@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 import logging
 from twisted.internet import reactor, defer
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
@@ -10,6 +9,7 @@ from smpp.pdu.error import *
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask
+from twisted.internet.task import LoopingCall
 
 class SMPP(object):
     ESME_NUM = '8181'
@@ -24,12 +24,15 @@ class SMPP(object):
                 host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
 
         self.smpp_config = smpp_config
+        self.db_config = db_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
 
     @defer.inlineCallbacks
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
+            self.lc_send_all = LoopingCall(self.send_all)
+            self.lc_send_all.start(60)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             print "ERROR: %s" % str(e)
@@ -74,32 +77,33 @@ class SMPP(object):
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
-        d = smpp.sendDataRequest(submit_pdu)
-        d.addBoth(self.message_sent)
+        return smpp.sendDataRequest(submit_pdu)
+        #d.addBoth(self.message_sent)
 
     def message_sent(self,*args,**kwargs):
         for arg in args:
             print "another arg:", arg
 
     def send_all(self):
-        print "RUN! send_all"
+        print "send_all"
+        del self.smstask
+        self.smstask = dbsmstask.dbSMSTask(self.db_config)
         tasks = self.smstask.check_tasks()
         for task in tasks:
             id, mobnum, sms_text = task
-            sms_text = unicode(sms_text + u'')
-            self.send_sms(self.smpp, mobnum, sms_text)
-            self.smstask.update_task_status(1, id, '')
+            d = self.send_sms(self.smpp, mobnum, sms_text)
+            d.addBoth(self.message_sent)
+            #self.smstask.update_task_status(1, id, '')
 
-
-def check_tasks(cSMPP):
-    cSMPP.send_all()
-    reactor.callLater(60, check_tasks, cSMPP)
+#cSMPP = None
+#def check_tasks():
+#    cSMPP.send_all()
+#    reactor.callLater(60, check_tasks)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
-    cSMPP = SMPP(db_config=db_config)
-    cSMPP.run()
-    reactor.callLater(5, check_tasks, cSMPP)
+    SMPP(db_config=db_config).run()
+    #reactor.callLater(5, check_tasks)
     reactor.run()
