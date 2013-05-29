@@ -25,7 +25,7 @@ class SMPP(object):
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-            self.lc_send_all = taks.LoopingCall(self.send_all)
+            self.lc_send_all = task.LoopingCall(self.send_all)
             self.lc_send_all.start(60)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
@@ -45,7 +45,7 @@ class SMPP(object):
                 short_message = short_message.decode('utf_16_be')
                 self.smstask.add_new_task(source_addr, pdu.seqNum)
                 d = self.send_sms(smpp, source_addr, self.smstask.weather)
-                d.addBoth(self.message_sent, '', pdu.seqNum)
+                d.addBoth(self.message_sent)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -70,11 +70,17 @@ class SMPP(object):
         )
         return smpp.sendDataRequest(submit_pdu)
 
-    def message_sent(self, task_id, message_id):
-        if self.error:
-            self.smstask.update_task_status(1, task_id, message_id)
-        else:
-            self.smstask.update_task_status(4, task_id, message_id)
+    def message_sent(self, *args, **kwargs):
+        print self
+        for arg in args:
+            print "ARG:", arg
+
+        for key in kwargs:
+            print "another keyword ARG: %s: %s" % (key, kwargs[key])
+        #if self.error:
+        #    self.smstask.update_task_status(1, task_id, message_id)
+        #else:
+        #    self.smstask.update_task_status(4, task_id, message_id)
 
     def send_all(self):
         print "send_all"
@@ -82,7 +88,7 @@ class SMPP(object):
         for task in tasks:
             task_id, mobnum, sms_text = task
             d = self.send_sms(self.smpp, mobnum, sms_text)
-            d.addBoth(self.message_sent, task_id, '')
+            d.addBoth(self.message_sent, task_id)
 
 
 if __name__ == '__main__':
