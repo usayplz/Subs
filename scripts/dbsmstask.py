@@ -35,6 +35,7 @@ class dbSMSTask(object):
                 charset='utf8',
             )
             self.cursor = self.connection.cursor()
+            self.cursor.execute('SET SESSION query_cache_type = OFF')
             self.connection_state = 1
         except db.Error, e:
             self.connection_state = 0
@@ -113,6 +114,7 @@ class dbSMSTask(object):
         '''
         try:
             self.cursor.execute(sql, {})
+            self.connection.commit() # or will be use a cache
         except db.Error, e:
             self.connection_state = 0
             print e

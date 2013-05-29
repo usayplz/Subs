@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, task
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
 from smpp.twisted.config import SMPPClientConfig
-from smpp.pdu.error import *
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask
-from twisted.internet.task import LoopingCall
+
 
 class SMPP(object):
     ESME_NUM = '8181'
@@ -17,12 +16,7 @@ class SMPP(object):
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
     DEST_ADDR_NPI = AddrNpi.ISDN
 
-
     def __init__(self, smpp_config=None, db_config=None):
-        if smpp_config is None:
-            smpp_config = SMPPClientConfig(
-                host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
-
         self.smpp_config = smpp_config
         self.db_config = db_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
@@ -31,7 +25,7 @@ class SMPP(object):
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-            self.lc_send_all = LoopingCall(self.send_all)
+            self.lc_send_all = taks.LoopingCall(self.send_all)
             self.lc_send_all.start(60)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
@@ -40,9 +34,6 @@ class SMPP(object):
             reactor.stop()
 
     def handleMsg(self, smpp, pdu):
-        #print "Received pdu: %s" % pdu
-
-        # some variables
         source_addr = pdu.params.get('source_addr', '')
         short_message = pdu.params.get('short_message', '')
         message_state = pdu.params.get('message_state', None)
@@ -53,8 +44,8 @@ class SMPP(object):
             else:
                 short_message = short_message.decode('utf_16_be')
                 self.smstask.add_new_task(source_addr, pdu.seqNum)
-                self.send_sms(smpp, source_addr, self.smstask.weather)
-                # defer.addBoth(self.)
+                d = self.send_sms(smpp, source_addr, self.smstask.weather)
+                d.addBoth(self.message_sent, '', pdu.seqNum)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -78,32 +69,26 @@ class SMPP(object):
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
         return smpp.sendDataRequest(submit_pdu)
-        #d.addBoth(self.message_sent)
 
-    def message_sent(self,*args,**kwargs):
-        for arg in args:
-            print "another arg:", arg
+    def message_sent(self, task_id, message_id):
+        if self.error:
+            self.smstask.update_task_status(1, task_id, message_id)
+        else:
+            self.smstask.update_task_status(4, task_id, message_id)
 
     def send_all(self):
         print "send_all"
-        del self.smstask
-        self.smstask = dbsmstask.dbSMSTask(self.db_config)
         tasks = self.smstask.check_tasks()
         for task in tasks:
-            id, mobnum, sms_text = task
+            task_id, mobnum, sms_text = task
             d = self.send_sms(self.smpp, mobnum, sms_text)
-            d.addBoth(self.message_sent)
-            #self.smstask.update_task_status(1, id, '')
-
-#cSMPP = None
-#def check_tasks():
-#    cSMPP.send_all()
-#    reactor.callLater(60, check_tasks)
+            d.addBoth(self.message_sent, task_id, '')
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
-    SMPP(db_config=db_config).run()
-    #reactor.callLater(5, check_tasks)
+    smpp_config = SMPPClientConfig(
+        host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
+    SMPP(smpp_config, db_config).run()
     reactor.run()
