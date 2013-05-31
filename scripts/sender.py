@@ -5,6 +5,7 @@ import logging
 from twisted.internet import reactor, defer, task
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
 from smpp.twisted.config import SMPPClientConfig
+from twisted.python import failure
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask
@@ -71,16 +72,14 @@ class SMPP(object):
         return smpp.sendDataRequest(submit_pdu)
 
     def message_sent(self, *args, **kwargs):
-        print self
-        for arg in args:
-            print "ARG:", arg
-
-        for key in kwargs:
-            print "another keyword ARG: %s: %s" % (key, kwargs[key])
-        #if self.error:
-        #    self.smstask.update_task_status(1, task_id, message_id)
-        #else:
-        #    self.smstask.update_task_status(4, task_id, message_id)
+        instance = args[0]
+        status = args[1]
+        task_id = args[2]
+        message_id = args[3]
+        if not isinstance(instance, failure.Failure):
+            self.smstask.update_task_status(1, task_id, message_id)
+        else:
+            print "ERROR"
 
     def send_all(self):
         print "send_all"
@@ -88,7 +87,7 @@ class SMPP(object):
         for task in tasks:
             task_id, mobnum, sms_text = task
             d = self.send_sms(self.smpp, mobnum, sms_text)
-            d.addBoth(self.message_sent, task_id)
+            d.addBoth(self.message_sent, status, task_id, '')
 
 
 if __name__ == '__main__':

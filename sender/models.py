@@ -48,18 +48,21 @@ class Subscriber(models.Model):
 # Очередь сообщений
 class SMSTask(models.Model):
     SMS_STATUSES = (
+        (-2, u'не доставлено'),
+        (-1, u'не отправлено'),
         (0, u'не отправлялось'),
         (1, u'отправлено'),
-        (2, u'не доставлено'),
-        (3, u'доставлено'),
+        (2, u'доставлено'),
     )
 
     mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
-    sms_text = models.TextField(_(u'Текст сообщения'))
-    delivery_date = models.DateTimeField(_(u'Дата доставки'), default=datetime.now)
+    in_text = models.TextField(_(u'Текст входящего сообщения'), default='')
+    out_text = models.TextField(_(u'Сообщение для отправки'))
+    delivery_date = models.DateTimeField(_(u'Дата доставки'), default=datetime.utcnow)
     sent_date = models.DateTimeField(_(u'Дата отправки'), null=True, blank=True)
     status = models.SmallIntegerField(_(u'Статус'), choices=SMS_STATUSES, default=0)
     message_id = models.IntegerField(_(u'Номер сообщения'), default=0)
+    send_error = models.TextField(_(u'Текст ошибки'), default='')
 
     def __unicode__(self):
         return self.mobnum

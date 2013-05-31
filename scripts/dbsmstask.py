@@ -50,14 +50,14 @@ class dbSMSTask(object):
 
         sql = '''
             insert into sender_smstask
-                (mobnum, sms_text, delivery_date, status, message_id)
+                (mobnum, out_text, delivery_date, status, message_id)
             values
-                (%(mobnum)s, %(sms_text)s, %(delivery_date)s, %(status)s, %(message_id)s)
+                (%(mobnum)s, %(out_text)s, %(delivery_date)s, %(status)s, %(message_id)s)
         '''
         try:
             self.cursor.execute(sql, {
                 'mobnum': mobnum,
-                'sms_text': self.weather,
+                'out_text': self.weather,
                 'delivery_date': datetime.utcnow(),
                 'status': status,
                 'message_id': message_id,
@@ -87,13 +87,13 @@ class dbSMSTask(object):
     def add_weather(self):
         sql = '''
             insert into sender_smstext 
-                (sms_text, mailing_id, from_date) 
+                (out_text, mailing_id, from_date) 
             values 
-                (%(sms_text)s, %(mailing_id)s, %(from_date)s)
+                (%(out_text)s, %(mailing_id)s, %(from_date)s)
         '''
         try:
             self.cursor.execute(sql, { 
-                'sms_text': self.weather,
+                'out_text': self.weather,
                 'mailing_id': self.MAILING, 
                 'from_date': datetime.utcnow(), 
             })
@@ -105,7 +105,7 @@ class dbSMSTask(object):
     def check_tasks(self):
         sql = '''
             select
-                id, mobnum, sms_text
+                id, mobnum, out_text
             from 
                 sender_smstask
             where
