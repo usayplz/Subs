@@ -17,7 +17,7 @@ class SMPP(object):
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
     DEST_ADDR_NPI = AddrNpi.ISDN
 
-    def __init__(self, smpp_config=None, db_config=None):
+    def __init__(self, smpp_config, db_config):
         self.smpp_config = smpp_config
         self.db_config = db_config
         self.smstask = dbsmstask.dbSMSTask(db_config)
@@ -40,13 +40,15 @@ class SMPP(object):
         message_state = pdu.params.get('message_state', None)
 
         if pdu.commandId == CommandId.deliver_sm:
-            if message_state == MessageState.DELIVERED:
-                pass
-            else:
+            if message_state is None:
                 short_message = short_message.decode('utf_16_be')
                 self.smstask.add_new_task(source_addr, pdu.seqNum)
                 d = self.send_sms(smpp, source_addr, self.smstask.weather)
                 d.addBoth(self.message_sent)
+            elif message_state == MessageState.DELIVERED:
+                self.smstask.update_task_status(2, '', pdu.seqNum)
+            elif message_state == MessageState.UNDELIVERABLE:
+                self.smstask.update_task_status(-2, '', pdu.seqNum)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -73,20 +75,17 @@ class SMPP(object):
 
     def message_sent(self, *args, **kwargs):
         instance = args[0]
-        status = args[1]
-        task_id = args[2]
-        message_id = args[3]
         if not isinstance(instance, failure.Failure):
-            self.smstask.update_task_status(1, task_id, message_id)
+           self.smstask.update_task_status(1, task_id, message_id)
         else:
-            print "ERROR"
+           self.smstask.update_task_status(-1, task_id, message_id)
 
     def send_all(self):
         print "send_all"
         tasks = self.smstask.check_tasks()
         for task in tasks:
-            task_id, mobnum, sms_text = task
-            d = self.send_sms(self.smpp, mobnum, sms_text)
+            task_id, mobnum, out_text = task
+            d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, status, task_id, '')
 
 
