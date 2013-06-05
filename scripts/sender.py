@@ -8,7 +8,7 @@ from smpp.twisted.config import SMPPClientConfig
 from twisted.python import failure
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
-import dbsmstask
+import dbsmstask, pid
 
 
 class SMPP(object):
@@ -17,10 +17,10 @@ class SMPP(object):
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
     DEST_ADDR_NPI = AddrNpi.ISDN
 
-    def __init__(self, smpp_config, db_config):
+    def __init__(self, smpp_config, db_config, logger):
         self.smpp_config = smpp_config
         self.db_config = db_config
-        self.smstask = dbsmstask.dbSMSTask(db_config)
+        self.smstask = dbsmstask.dbSMSTask(db_config, logger)
 
     @defer.inlineCallbacks
     def run(self):
@@ -30,7 +30,8 @@ class SMPP(object):
             self.lc_send_all.start(60)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
-            print "ERROR: %s" % str(e)
+            logger.critical(e)
+            raise
         finally:
             reactor.stop()
 
@@ -44,6 +45,7 @@ class SMPP(object):
             if message_state is None:
                 short_message = short_message.decode('utf_16_be')
                 task_id = self.smstask.add_new_task(source_addr, short_message)
+                logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
                 d = self.send_sms(smpp, source_addr, self.smstask.weather)
                 d.addBoth(self.message_sent, task_id)
             elif message_state == MessageState.DELIVERED:
@@ -87,12 +89,36 @@ class SMPP(object):
         tasks = self.smstask.check_tasks()
         for task in tasks:
             task_id, mobnum, out_text = task
+            logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
             d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, task_id)
 
 
+def critical(msg, *args, **kwargs):
+    logger.error(msg)
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    # check pid
+    PID = 'sender.pid'
+    if pid.check_pid(int(pid.read_pid(PID))):
+        print "Already running %s" % (PID,)
+        sys.exit(0)
+    else:
+        pid.write_pid(PID)
+
+    # logger
+    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), __file__))
+    logging.basicConfig(
+        level=logging.DEBUG, 
+        format="%(asctime)-15s %(levelname)s %(message)s",
+        filename=log_file
+    )
+    logger = logging.getLogger(__name__)
+    logger.critical = critical
+
+    # start
+    logger.info('[START PROGRAM]')
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     smpp_config = SMPPClientConfig(
         host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )

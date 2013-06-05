@@ -12,7 +12,7 @@ class dbSMSTask(object):
     KEY = 'b5720198c3228276'
     LOCATION = 'Irkutsk'
 
-    def __init__(self, db_config):
+    def __init__(self, db_config, logger):
         self.db_config = db_config
         self.connection_state = 0
         self.connect()
@@ -39,7 +39,8 @@ class dbSMSTask(object):
             self.connection_state = 1
         except db.Error, e:
             self.connection_state = 0
-            print e
+            logger.critical(e)
+            raise
 
     def add_new_task(self, mobnum, in_text):
         status = 1
@@ -65,7 +66,8 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            print e
+            logger.critical(e)
+            raise
             return -1
         return self.cursor.lastrowid
 
@@ -87,7 +89,8 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            print e
+            logger.critical(e)
+            raise
 
     def add_weather(self):
         sql = '''
@@ -105,7 +108,8 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            print e
+            logger.critical(e)
+            raise
 
     def check_tasks(self):
         sql = '''
@@ -122,7 +126,8 @@ class dbSMSTask(object):
             self.connection.commit() # or will be use a cache
         except db.Error, e:
             self.connection_state = 0
-            print e
+            logger.critical(e)
+            raise
             return []
 
         return self.cursor.fetchall()
