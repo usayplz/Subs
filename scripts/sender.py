@@ -103,7 +103,7 @@ if __name__ == '__main__':
     PID = 'sender.pid'
     if pid.check_pid(int(pid.read_pid(PID))):
         print "Already running %s" % (PID,)
-        sys.exit(0)
+        exit(0)
     else:
         pid.write_pid(PID)
 
