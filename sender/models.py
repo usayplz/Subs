@@ -56,13 +56,13 @@ class SMSTask(models.Model):
     )
 
     mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
-    in_text = models.TextField(_(u'Текст входящего сообщения'), default='')
+    in_text = models.TextField(_(u'Текст входящего сообщения'), null=True, blank=True)
     out_text = models.TextField(_(u'Сообщение для отправки'))
     delivery_date = models.DateTimeField(_(u'Дата доставки'), default=datetime.utcnow)
     sent_date = models.DateTimeField(_(u'Дата отправки'), null=True, blank=True)
     status = models.SmallIntegerField(_(u'Статус'), choices=SMS_STATUSES, default=0)
     message_id = models.IntegerField(_(u'Номер сообщения'), default=0)
-    send_error = models.TextField(_(u'Текст ошибки'), default='')
+    send_error = models.TextField(_(u'Текст ошибки'), null=True, blank=True)
 
     def __unicode__(self):
         return self.mobnum
