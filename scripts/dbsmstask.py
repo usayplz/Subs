@@ -41,7 +41,7 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
-    def add_new_task(self, mobnum):
+    def add_new_task(self, mobnum, in_text):
         status = 1
         if not self.weather or time.time()-self.weather_timer > self.WEATHER_TIMEOUT:
             self.weather = unicode(WundergroundWather(self.KEY, self.LOCATION))
@@ -50,13 +50,14 @@ class dbSMSTask(object):
 
         sql = '''
             insert into sender_smstask
-                (mobnum, out_text, delivery_date, status)
+                (mobnum, in_text, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(out_text)s, %(delivery_date)s, %(status)s)
+                (%(mobnum)s, %(in_text)s, %(out_text)s, %(delivery_date)s, %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
                 'mobnum': mobnum,
+                'in_text': in_text,
                 'out_text': self.weather,
                 'delivery_date': datetime.utcnow(),
                 'status': status,
@@ -73,6 +74,7 @@ class dbSMSTask(object):
             update sender_smstask
             set status = %(status)s,
                 message_id = %(new_message_id)s,
+                sent_date = NOW()
             where message_id = %(message_id)s or id = %(task_id)s
         '''
         try:

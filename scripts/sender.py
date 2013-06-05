@@ -38,17 +38,18 @@ class SMPP(object):
         source_addr = pdu.params.get('source_addr', '')
         short_message = pdu.params.get('short_message', '')
         message_state = pdu.params.get('message_state', None)
+        message_id = pdu.params.get('receipted_message_id', -1)
 
         if pdu.commandId == CommandId.deliver_sm:
             if message_state is None:
                 short_message = short_message.decode('utf_16_be')
-                task_id = self.smstask.add_new_task(source_addr)
+                task_id = self.smstask.add_new_task(source_addr, short_message)
                 d = self.send_sms(smpp, source_addr, self.smstask.weather)
                 d.addBoth(self.message_sent, task_id)
             elif message_state == MessageState.DELIVERED:
-                self.smstask.update_task(2, '', pdu.seqNum, '')
+                self.smstask.update_task(2, '', message_id, message_id)
             elif message_state == MessageState.UNDELIVERABLE:
-                self.smstask.update_task(-2, '', pdu.seqNum, '')
+                self.smstask.update_task(-2, '', message_id, message_id)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -77,13 +78,12 @@ class SMPP(object):
         instance = args[0]
         task_id = args[1]
         if not isinstance(instance, failure.Failure):
-            new_message_id = instance.params.get('message_id', 0)
+            new_message_id = instance.response.params.get('message_id', 0)
             self.smstask.update_task(1, task_id, '', new_message_id)
         else:
-            self.smstask.update_task(-1, task_id, '', '')
+            self.smstask.update_task(-1, task_id, '', -1)
 
     def send_all(self):
-        print "send_all"
         tasks = self.smstask.check_tasks()
         for task in tasks:
             task_id, mobnum, out_text = task
@@ -92,7 +92,7 @@ class SMPP(object):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     smpp_config = SMPPClientConfig(
         host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
