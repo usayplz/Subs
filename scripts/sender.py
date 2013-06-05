@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import logging
+import os, logging, datetime
 from twisted.internet import reactor, defer, task
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
 from smpp.twisted.config import SMPPClientConfig
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         pid.write_pid(PID)
 
     # logger
-    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), __file__))
+    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
     logging.basicConfig(
         level=logging.DEBUG, 
         format="%(asctime)-15s %(levelname)s %(message)s",
@@ -122,5 +122,5 @@ if __name__ == '__main__':
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     smpp_config = SMPPClientConfig(
         host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
-    SMPP(smpp_config, db_config).run()
+    SMPP(smpp_config, db_config, logger).run()
     reactor.run()
