@@ -42,13 +42,13 @@ class SMPP(object):
         if pdu.commandId == CommandId.deliver_sm:
             if message_state is None:
                 short_message = short_message.decode('utf_16_be')
-                self.smstask.add_new_task(source_addr, pdu.seqNum)
+                task_id = self.smstask.add_new_task(source_addr)
                 d = self.send_sms(smpp, source_addr, self.smstask.weather)
-                d.addBoth(self.message_sent)
+                d.addBoth(self.message_sent, task_id)
             elif message_state == MessageState.DELIVERED:
-                self.smstask.update_task_status(2, '', pdu.seqNum)
+                self.smstask.update_task(2, '', pdu.seqNum, '')
             elif message_state == MessageState.UNDELIVERABLE:
-                self.smstask.update_task_status(-2, '', pdu.seqNum)
+                self.smstask.update_task(-2, '', pdu.seqNum, '')
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -75,10 +75,12 @@ class SMPP(object):
 
     def message_sent(self, *args, **kwargs):
         instance = args[0]
+        task_id = args[1]
         if not isinstance(instance, failure.Failure):
-           self.smstask.update_task_status(1, task_id, message_id)
+            new_message_id = instance.params.get('message_id', 0)
+            self.smstask.update_task(1, task_id, '', new_message_id)
         else:
-           self.smstask.update_task_status(-1, task_id, message_id)
+            self.smstask.update_task(-1, task_id, '', '')
 
     def send_all(self):
         print "send_all"
@@ -86,7 +88,7 @@ class SMPP(object):
         for task in tasks:
             task_id, mobnum, out_text = task
             d = self.send_sms(self.smpp, mobnum, out_text)
-            d.addBoth(self.message_sent, status, task_id, '')
+            d.addBoth(self.message_sent, task_id)
 
 
 if __name__ == '__main__':

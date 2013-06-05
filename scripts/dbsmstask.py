@@ -41,7 +41,7 @@ class dbSMSTask(object):
             self.connection_state = 0
             print e
 
-    def add_new_task(self, mobnum, message_id):
+    def add_new_task(self, mobnum):
         status = 1
         if not self.weather or time.time()-self.weather_timer > self.WEATHER_TIMEOUT:
             self.weather = unicode(WundergroundWather(self.KEY, self.LOCATION))
@@ -50,9 +50,9 @@ class dbSMSTask(object):
 
         sql = '''
             insert into sender_smstask
-                (mobnum, out_text, delivery_date, status, message_id)
+                (mobnum, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(out_text)s, %(delivery_date)s, %(status)s, %(message_id)s)
+                (%(mobnum)s, %(out_text)s, %(delivery_date)s, %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -60,17 +60,19 @@ class dbSMSTask(object):
                 'out_text': self.weather,
                 'delivery_date': datetime.utcnow(),
                 'status': status,
-                'message_id': message_id,
             })
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
             print e
+            return -1
+        return self.cursor.lastrowid
 
-    def update_task_status(self, status, task_id='', message_id=''):
+    def update_task(self, status, task_id='', message_id='', new_message_id=''):
         sql = '''
             update sender_smstask
-            set status = %(status)s
+            set status = %(status)s,
+                message_id = %(new_message_id)s,
             where message_id = %(message_id)s or id = %(task_id)s
         '''
         try:
@@ -78,6 +80,7 @@ class dbSMSTask(object):
                 "status": status,
                 "message_id": message_id,
                 "task_id": task_id,
+                "new_message_id": new_message_id,
             })
             self.connection.commit()
         except db.Error, e:
@@ -87,13 +90,13 @@ class dbSMSTask(object):
     def add_weather(self):
         sql = '''
             insert into sender_smstext 
-                (out_text, mailing_id, from_date) 
+                (sms_text, mailing_id, from_date) 
             values 
-                (%(out_text)s, %(mailing_id)s, %(from_date)s)
+                (%(sms_text)s, %(mailing_id)s, %(from_date)s)
         '''
         try:
             self.cursor.execute(sql, { 
-                'out_text': self.weather,
+                'sms_text': self.weather,
                 'mailing_id': self.MAILING, 
                 'from_date': datetime.utcnow(), 
             })
