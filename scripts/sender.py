@@ -50,8 +50,10 @@ class SMPP(object):
                 d.addBoth(self.message_sent, task_id)
             elif message_state == MessageState.DELIVERED:
                 self.smstask.update_task(2, '', message_id, message_id)
+                logger.info('DELIVERED: %s' % message_id)
             elif message_state == MessageState.UNDELIVERABLE:
                 self.smstask.update_task(-2, '', message_id, message_id)
+                logger.info('UNDELIVERED: %s' % message_id)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -82,8 +84,10 @@ class SMPP(object):
         if not isinstance(instance, failure.Failure):
             new_message_id = instance.response.params.get('message_id', 0)
             self.smstask.update_task(1, task_id, '', new_message_id)
+            logger.info('Message sent task id: %s' % task_id)
         else:
             self.smstask.update_task(-1, task_id, '', -1)
+            logger.info('Error send task id: %s' % task_id)
 
     def send_all(self):
         tasks = self.smstask.check_tasks()
@@ -110,7 +114,7 @@ if __name__ == '__main__':
     # logger
     log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
     logging.basicConfig(
-        level=logging.DEBUG, 
+        level=logging.INFO, 
         format="%(asctime)-15s %(levelname)s %(message)s",
         filename=log_file
     )
