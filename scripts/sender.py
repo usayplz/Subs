@@ -79,7 +79,6 @@ class SMPP(object):
             encoding: UCS2
         """
         short_message = short_message.encode('utf_16_be')
-
         submit_pdu = SubmitSM(
             source_addr=self.ESME_NUM,
             destination_addr=source_addr,

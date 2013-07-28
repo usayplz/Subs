@@ -29,10 +29,12 @@ class Mailing(models.Model):
         return self.name
 
     class Meta:
+        ordering = ['code']
         verbose_name = _(u'Рассылка')
         verbose_name_plural = _(u'Рассылки')
 
 
+# Диапозоны номеров
 class MailingNumber(models.Model):
     mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
     number_from = models.CharField(_(u'С номера'), max_length=12)
@@ -41,9 +43,10 @@ class MailingNumber(models.Model):
     create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)
 
     def __unicode__(self):
-        return self.name
+        return self.number_from
 
     class Meta:
+        ordering = ['number_from', 'number_to']
         verbose_name = _(u'Диапозон номеров')
         verbose_name_plural = _(u'Диапозоны номеров')
 
@@ -52,11 +55,13 @@ class MailingNumber(models.Model):
 class Subscriber(models.Model):
     mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
     mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
+    create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
 
     def __unicode__(self):
-        return u"%s - %s" % (self.mobnum, self.mailing)
+        return self.mobnum
 
     class Meta:
+        ordering = ['mobnum', 'mailing']
         verbose_name = _(u'Подписчик')
         verbose_name_plural = _(u'Подписчики')
 
@@ -84,6 +89,7 @@ class SMSTask(models.Model):
         return self.mobnum
 
     class Meta:
+        ordering = ['-delivery_date']
         verbose_name = _(u'Очередь сообщений')
         verbose_name_plural = _(u'Очередь сообщений')
 
