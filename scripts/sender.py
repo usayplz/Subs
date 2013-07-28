@@ -20,6 +20,7 @@ class SMPP(object):
     def __init__(self, smpp_config, db_config, logger):
         self.smpp_config = smpp_config
         self.db_config = db_config
+        self.logger = logger
         self.smstask = dbsmstask.dbSMSTask(db_config, logger)
 
     @defer.inlineCallbacks
@@ -30,7 +31,7 @@ class SMPP(object):
             self.lc_send_all.start(60)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
-            logger.critical(e)
+            self.logger.critical(e)
             raise
         finally:
             reactor.stop()
@@ -40,20 +41,37 @@ class SMPP(object):
         short_message = pdu.params.get('short_message', '')
         message_state = pdu.params.get('message_state', None)
         message_id = pdu.params.get('receipted_message_id', -1)
+        data_coding = pdu.params.get('data_coding', -1)
+
+        self.logger.info('PDU = %s' % pdu)
 
         if pdu.commandId == CommandId.deliver_sm:
             if message_state is None:
-                short_message = short_message.decode('utf_16_be')
-                task_id = self.smstask.add_new_task(source_addr, short_message)
-                logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
-                d = self.send_sms(smpp, source_addr, self.smstask.weather)
-                d.addBoth(self.message_sent, task_id)
+                if data_coding.schemeData == DataCodingDefault.SMSC_DEFAULT_ALPHABET:
+                    short_message = unicode(short_message, 'ascii')
+                elif data_coding.schemeData == DataCodingDefault.IA5_ASCII:
+                    short_message = unicode(short_message, 'ascii')
+                elif data_coding.schemeData == DataCodingDefault.UCS2:
+                    short_message = unicode(short_message, 'UTF-16BE')
+                elif data_coding.schemeData == DataCodingDefault.LATIN_1:
+                    short_message = unicode(short_message, 'latin_1')
+
+                # checking
+                if short_message in [u'-pogoda', u'-погода']:
+                    self.smstask.del_subscriber(source_addr)
+                elif short_message in ['21','22','23','24','25','26']:
+                    self.smstask.add_subscriber(source_addr, short_message)
+                else:
+                    task_id = self.smstask.add_new_task(source_addr, short_message)
+                    self.send_sms(smpp, source_addr, self.smstask.weather).addBoth(self.message_sent, task_id)
+                    self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
+                    # self.smstask.add_subscriber(source_addr)
             elif message_state == MessageState.DELIVERED:
                 self.smstask.update_task(2, '', message_id, message_id)
-                logger.info('DELIVERED: %s' % message_id)
+                self.logger.info('DELIVERED: %s' % message_id)
             elif message_state == MessageState.UNDELIVERABLE:
                 self.smstask.update_task(-2, '', message_id, message_id)
-                logger.info('UNDELIVERED: %s' % message_id)
+                self.logger.info('UNDELIVERED: %s' % message_id)
 
     def send_sms(self, smpp, source_addr, short_message):
         """params:
@@ -65,7 +83,7 @@ class SMPP(object):
         submit_pdu = SubmitSM(
             source_addr=self.ESME_NUM,
             destination_addr=source_addr,
-            short_message=short_message,
+            message_payload=short_message,
             source_addr_ton=self.SOURCE_ADDR_TON,
             dest_addr_ton=self.DEST_ADDR_TON,
             dest_addr_npi=self.DEST_ADDR_NPI,
@@ -84,16 +102,17 @@ class SMPP(object):
         if not isinstance(instance, failure.Failure):
             new_message_id = instance.response.params.get('message_id', 0)
             self.smstask.update_task(1, task_id, '', new_message_id)
-            logger.info('Message sent task id: %s' % task_id)
+            self.logger.info('Message sent task id: %s' % task_id)
         else:
             self.smstask.update_task(-1, task_id, '', -1)
-            logger.info('Error send task id: %s' % task_id)
+            self.logger.info('Error send task id: %s' % task_id)
+            self.logger.info(instance)
 
     def send_all(self):
         tasks = self.smstask.check_tasks()
         for task in tasks:
             task_id, mobnum, out_text = task
-            logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
+            self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
             d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, task_id)
 

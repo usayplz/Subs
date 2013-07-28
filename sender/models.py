@@ -19,6 +19,7 @@ class MailingCron(models.Model):
 
 # Рассылки
 class Mailing(models.Model):
+    code = models.SmallIntegerField(_(u'Код рассылки'), primary_key=True, default=0)
     name = models.CharField(_(u'Название рассылки'), max_length=255)
     cron = models.ManyToManyField(MailingCron, verbose_name=_(u'Время запуска'), null=True, blank=True)
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
@@ -30,6 +31,21 @@ class Mailing(models.Model):
     class Meta:
         verbose_name = _(u'Рассылка')
         verbose_name_plural = _(u'Рассылки')
+
+
+class MailingNumber(models.Model):
+    mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
+    number_from = models.CharField(_(u'С номера'), max_length=12)
+    number_to = models.CharField(_(u'По номер'), max_length=12)
+    create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
+    create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _(u'Диапозон номеров')
+        verbose_name_plural = _(u'Диапозоны номеров')
 
 
 # Привязка мобильных к рассылкам

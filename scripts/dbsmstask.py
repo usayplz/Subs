@@ -8,7 +8,7 @@ from wunderground import WundergroundWather
 
 class dbSMSTask(object):
     WEATHER_TIMEOUT = 15*60
-    MAILING = 1
+    MAILING = 21
     KEY = 'b5720198c3228276'
     LOCATION = 'Irkutsk'
 
@@ -16,6 +16,7 @@ class dbSMSTask(object):
         self.db_config = db_config
         self.connection_state = 0
         self.connect()
+        self.logger = logger
 
         self.weather = ''
         self.connection_state = 0
@@ -39,7 +40,7 @@ class dbSMSTask(object):
             self.connection_state = 1
         except db.Error, e:
             self.connection_state = 0
-            logger.critical(e)
+            self.logger.critical(e)
             raise
 
     def add_new_task(self, mobnum, in_text):
@@ -66,7 +67,7 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            logger.critical(e)
+            self.logger.critical(e)
             raise
             return -1
         return self.cursor.lastrowid
@@ -89,7 +90,7 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            logger.critical(e)
+            self.logger.critical(e)
             raise
 
     def add_weather(self):
@@ -108,8 +109,77 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.connection_state = 0
-            logger.critical(e)
+            self.logger.critical(e)
             raise
+
+    def add_subscriber(self, mobnum, mailing_id=None):
+        if mailing_id is None:
+            mailing_id = self.get_mailing_by_mobnum(mobnum)
+
+        sql = '''
+            insert into sender_subscriber 
+                (mobnum, mailing_id) 
+            values 
+                (%(mobnum)s, %(mailing_id)s)
+        '''
+        try:
+            self.cursor.execute(sql, { 
+                'mobnum': mobnum,
+                'mailing_id': mailing_id,
+            })
+            self.connection.commit()
+        except db.Error, e:
+            self.connection_state = 0
+            self.logger.critical(e)
+            raise
+            return 0
+        return 1
+
+    def del_subscriber(self, mobnum):
+        """
+            unsubscriber from all subs
+        """
+        sql = '''
+            delete from 
+                sender_subscriber 
+            where 
+                mobnum = %(mobnum)s 
+        '''
+        try:
+            self.cursor.execute(sql, { 
+                'mobnum': mobnum,
+                'mailing_id': self.MAILING,
+            })
+            self.connection.commit()
+        except db.Error, e:
+            self.connection_state = 0
+            self.logger.critical(e)
+            raise
+            return 0
+        return 1
+
+    def get_mailing_by_mobnum(self, mobnum):
+        """
+            unsubscriber from all subs
+        """
+        sql = '''
+            select 
+                mailing_id 
+            from 
+                sender_mailingnumber 
+            where 
+                %(mobnum)s between number_from and number_to
+        '''
+        try:
+            self.cursor.execute(sql, {'mobnum': mobnum,})
+            self.connection.commit() # or will be use a cache
+        except db.Error, e:
+            self.connection_state = 0
+            self.logger.critical(e)
+            raise
+            return 0
+
+        return self.cursor.fetchone()[0]
 
     def check_tasks(self):
         sql = '''
@@ -126,7 +196,7 @@ class dbSMSTask(object):
             self.connection.commit() # or will be use a cache
         except db.Error, e:
             self.connection_state = 0
-            logger.critical(e)
+            self.logger.critical(e)
             raise
             return []
 
@@ -137,7 +207,7 @@ def main(args=None):
     logger = logging.getLogger(__name__)
 
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
-    tasker = dbSMSTask(db_config)
+    tasker = dbSMSTask(db_config, logger)
     tasker.add_new_task('9021702030', 123456)
 
 if __name__ == '__main__':
