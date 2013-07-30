@@ -10,20 +10,24 @@ def _kph2mps(value):
 def _convert_wind_en2ru(value):
     dict_enru_wind_direction = {
         'East'  :   u'восточный',
+        'E'     :   u'восточный',
         'ENE'   :   u'северо-восточный',
         'ESE'   :   u'юго-восточный',
         'NE'    :   u'северо-восточный',
         'NNE'   :   u'северо-восточный',
         'NNW'   :   u'северо-западный',
         'North' :   u'северный',
+        'N'     :   u'северный',
         'NW'    :   u'северо-западный',
         'SE'    :   u'юго-восточный',
         'South' :   u'южный',
+        'S'     :   u'южный',
         'SSE'   :   u'юго-восточный',
         'SSW'   :   u'юго-западный',
         'SW'    :   u'юго-западный',
         'Variable': u'переменный',
         'West'  :   u'западный',
+        'W'     :   u'западный',
         'WNW'   :   u'северо-западный',
         'WSW'   :   u'юго-западный',
     }
@@ -88,6 +92,9 @@ def _convert_weather_en2ru(value):
         'widespread dust': u'пыль',
     }
     return dict_enru_weather_direction[value]
+
+def convert_current_weather(temp, cond, wind, speed):
+    return u'%s° C, %s, %s ветер %s м/с' % (temp, cond, wind, speed)
 
 def main(location):
 #    yahoo_result = pywapi.get_weather_from_yahoo(location)
