@@ -32,81 +32,73 @@ def _convert_wind_en2ru(value):
 def _convert_weather_en2ru(value):
     value = value.lower()
     dict_enru_weather_direction = {
-        'blowing sand': u'пе��ана� б���',
-        'blowing snow': u'ме�ел�',
-        'chance of rain': u'возможен дожд�',
-        'chance of snow': u'возможен �нег',
-        'chance of storm': u'��о�мовое п�ед�п�еждение',
-        'chance of tstorm': u'��о�мовое п�ед�п�еждение',
-        'clear': u'��но',
-        'cloudy': u'обла�но',
-        'drizzle': u'дожд�',
-        'dust whirls': u'п�л�н�е ви��и',
-        'dust': u'п�л�',
-        'fog': u'��ман',
-        'freezing drizzle': u'измо�оз�',
-        'freezing rain': u'лед�ной дожд�',
-        'hail showers': u'г�ад',
-        'hail': u'г�ад',
-        'haze': u'д�мка',
-        'light snow': u'небол��ой �нег',
-        'light rain': u'небол��ой дожд�',
-        'mist': u'��ман',
-        'mostly cloudy': u'пе�еменна� обла�но���',
-        'mostly sunny': u'небол��а� обла�но���',
-        'overcast': u'па�м��но',
-        'partial fog': u'��ман',
-        'partly cloudy': u'��но',
-        'partly sunny': u'ме��ами �олне�но',
-        'rain and snow': u'дожд� и �нег',
-        'rain mist': u'дожд�, ��ман',
-        'rain showers': u'дожд�',
-        'rain': u'дожд�',
-        'sand': u'пе�ок',
-        'sandstorm': u'пе��ана� б���',
-        'scattered clouds': u'возможен дожд�',
-        'scattered showers': u'возможен дожд�',
-        'scattered thunderstorms': u'возможен� г�оз�',
-        'shallow fog': u'низкий ��ман',
-        'showers': u'ливен�',
-        'sleet': u'дожд� �о �негом',
-        'smoke': u'д�м',
-        'snow blowing snow mist': u'�нег ме�ел� ��ман ',
-        'snow showers': u'�нег',
-        'snow': u'�нег',
-        'snow showers': u'�нег',
-        'squalls': u'�квал�',
-        'storm': u'б���',
-        'sunny': u'�олне�но',
-        'thunderstorm': u'г�оза',
-        'thunderstorms and rain': u'г�оз� и дожд�',
-        'thunderstorms and snow': u'г�оз� и �нег',
-        'thunderstorms with hail': u'г�оз� � г�адом',
-        'thunderstorms with small hail': u'г�оз� � г�адом небол��ие ',
-        'unknown precipitation': u'о�адки',
-        'volcanic ash': u'в�лкани�е�кий пепел',
-        'widespread dust': u'п�л�',
+        'blowing sand': u'песчаная буря',
+        'blowing snow': u'метель',
+        'chance of rain': u'возможен дождь',
+        'chance of snow': u'возможен снег',
+        'chance of storm': u'штормовое предупреждение',
+        'chance of tstorm': u'штормовое предупреждение',
+        'clear': u'ясно',
+        'cloudy': u'облачно',
+        'drizzle': u'дождь',
+        'dust whirls': u'пыльные вихри',
+        'dust': u'пыль',
+        'fog': u'туман',
+        'freezing drizzle': u'изморозь',
+        'freezing rain': u'ледяной дождь',
+        'hail showers': u'град',
+        'hail': u'град',
+        'haze': u'дымка',
+        'light snow': u'небольшой снег',
+        'light rain': u'небольшой дождь',
+        'mist': u'туман',
+        'mostly cloudy': u'переменная облачность',
+        'mostly sunny': u'небольшая облачность',
+        'overcast': u'пасмурно',
+        'partial fog': u'туман',
+        'partly cloudy': u'ясно',
+        'partly sunny': u'местами солнечно',
+        'rain and snow': u'дождь и снег',
+        'rain mist': u'дождь, туман',
+        'rain showers': u'дождь',
+        'rain': u'дождь',
+        'sand': u'песок',
+        'sandstorm': u'песчаная буря',
+        'scattered clouds': u'возможен дождь',
+        'scattered showers': u'возможен дождь',
+        'scattered thunderstorms': u'возможены грозы',
+        'shallow fog': u'низкий туман',
+        'showers': u'ливень',
+        'sleet': u'дождь со снегом',
+        'smoke': u'дым',
+        'snow blowing snow mist': u'снег метель туман ',
+        'snow showers': u'снег',
+        'snow': u'снег',
+        'snow showers': u'снег',
+        'squalls': u'шквалы',
+        'storm': u'буря',
+        'sunny': u'солнечно',
+        'thunderstorm': u'гроза',
+        'thunderstorms and rain': u'грозы и дождь',
+        'thunderstorms and snow': u'грозы и снег',
+        'thunderstorms with hail': u'грозы с градом',
+        'thunderstorms with small hail': u'грозы с градом небольшие ',
+        'unknown precipitation': u'осадки',
+        'volcanic ash': u'вулканический пепел',
+        'widespread dust': u'пыль',
     }
     return dict_enru_weather_direction[value]
-
-# def __unicode__(self):
-#     return u'%s: %s° C, %s, %s ветер %s м/с' % (self.city, self.temperature, self.weather, self.wind_direction, self.wind_speed)
-
 
 def main(location):
 #    yahoo_result = pywapi.get_weather_from_yahoo(location)
 #    print yahoo_result
 #    print "---------------------------------------------------------"
-    weather_com_result = pywapi.get_weather_from_weather_com('RSXX8707')
+    weather_com_result = pywapi.get_weather_from_weather_com(location)
     print weather_com_result['current_conditions']['temperature']
-#    print _convert_weather_en2ru(
-    print weather_com_result['current_conditions']['text']
+    print _convert_weather_en2ru(weather_com_result['current_conditions']['text'])
     print _convert_wind_en2ru(weather_com_result['current_conditions']['wind']['text'])
     print _kph2mps(weather_com_result['current_conditions']['wind']['speed'])
 
-    # weather = YahooWeather(location)
-    # print unicode(weather)
-
 if __name__ == "__main__":
-    location = "1984174"
+    location = "RSXX8707"
     exit(main(location))
