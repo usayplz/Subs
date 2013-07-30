@@ -251,6 +251,8 @@ class DeliverSM(PDUDataRequest):
         'network_error_code',
         'message_state',
         'receipted_message_id',
+        'ussd_service_op',
+        'test',
     ]
 
 class DataSMResp(PDUResponse):

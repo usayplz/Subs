@@ -3,7 +3,6 @@
 
 import MySQLdb as db
 import logging, time
-from datetime import datetime
 from wunderground import WundergroundWather
 
 class dbSMSTask(object):
@@ -54,14 +53,13 @@ class dbSMSTask(object):
             insert into sender_smstask
                 (mobnum, in_text, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(in_text)s, %(out_text)s, %(delivery_date)s, %(status)s)
+                (%(mobnum)s, %(in_text)s, %(out_text)s, NOW(), %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
                 'mobnum': mobnum,
                 'in_text': in_text,
                 'out_text': self.weather,
-                'delivery_date': datetime.utcnow(),
                 'status': status,
             })
             self.connection.commit()
@@ -98,13 +96,12 @@ class dbSMSTask(object):
             insert into sender_smstext 
                 (sms_text, mailing_id, from_date) 
             values 
-                (%(sms_text)s, %(mailing_id)s, %(from_date)s)
+                (%(sms_text)s, %(mailing_id)s, NOW())
         '''
         try:
             self.cursor.execute(sql, { 
                 'sms_text': self.weather,
                 'mailing_id': self.MAILING, 
-                'from_date': datetime.utcnow(), 
             })
             self.connection.commit()
         except db.Error, e:
@@ -118,9 +115,9 @@ class dbSMSTask(object):
 
         sql = '''
             insert into sender_subscriber 
-                (mobnum, mailing_id) 
+                (mobnum, mailing_id, create_date) 
             values 
-                (%(mobnum)s, %(mailing_id)s)
+                (%(mobnum)s, %(mailing_id)s, NOW())
         '''
         try:
             self.cursor.execute(sql, { 

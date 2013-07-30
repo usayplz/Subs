@@ -94,6 +94,7 @@ class DataCoding(object):
 
 DestFlag = Enum(*constants.dest_flag_name_map.keys())
 MessageState = Enum(*constants.message_state_name_map.keys())
+ussdServiceOp = Enum(*constants.ussd_service_op_name_map.keys())
 CallbackNumDigitModeIndicator = Enum(*constants.callback_num_digit_mode_indicator_name_map.keys())
 SubaddressTypeTag = Enum(*constants.subaddress_type_tag_name_map.keys())
 

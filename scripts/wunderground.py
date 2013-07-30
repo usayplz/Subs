@@ -6,7 +6,7 @@ Returns current conditions, forecast and alerts from wunderground.com.
 """
 
 import sys, urllib
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree
 
 
 class WundergroundWather():
@@ -17,7 +17,7 @@ class WundergroundWather():
             current_conditions = 'http://api.wunderground.com/api/%s/conditions/lang:RU/q/Russia/%s.xml' % (key, location)
             urllib.socket.setdefaulttimeout(8)
             usock = urllib.urlopen(current_conditions)
-            tree = ET.parse(usock)
+            tree = ElementTree.parse(usock)
             usock.close()
         except:
             print 'ERROR - Current Conditions - Could not get information from server...'

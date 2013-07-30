@@ -105,21 +105,22 @@ class IntegerBaseEncoder(PDUNullableFieldEncoder):
         1: '!B',
         2: '!H',
         4: '!L',
+        16: '>QQ',
     }
-    
+
     #pylint: disable-msg=E0213
     def assertFmtSizes(sizeFmtMap):
         for (size, fmt) in sizeFmtMap.items():
             assert struct.calcsize(fmt) == size
-            
+
     #Verify platform sizes match protocol
     assertFmtSizes(sizeFmtMap)
 
     def __init__(self, **kwargs):
         PDUNullableFieldEncoder.__init__(self, **kwargs)
-        
+
         self.nullHex = '00' * self.size 
-        
+
         self.max = 2 ** (8 * self.size) - 1
         self.min = 0
         if 'max' in kwargs:
@@ -137,23 +138,27 @@ class IntegerBaseEncoder(PDUNullableFieldEncoder):
         if value > self.max:
             raise ValueError("Value %d exceeds max %d" % (value, self.max))
         if value < self.min:
-            raise ValueError("Value %d is less than min %d" % (value, self.min))            
+            raise ValueError("Value %d is less than min %d" % (value, self.min))
         return struct.pack(self.sizeFmtMap[self.size], value)
-        
+
     def _read(self, file):
         return self.read(file, self.size)
-        
+
     def _decode(self, bytes):
         return struct.unpack(self.sizeFmtMap[self.size], bytes)[0]
 
+class Int16Encoder(IntegerBaseEncoder):
+    size = 16
+
 class Int4Encoder(IntegerBaseEncoder):
     size = 4
-    
+
 class Int1Encoder(IntegerBaseEncoder):
     size = 1
-    
+
 class Int2Encoder(IntegerBaseEncoder):
     size = 2
+
 
 class OctetStringEncoder(PDUNullableFieldEncoder):
     nullable = False
@@ -171,8 +176,7 @@ class OctetStringEncoder(PDUNullableFieldEncoder):
         length = len(value)
         if self.getSize() is not None:
             if length != self.getSize():
-                pass
-                #raise ValueError("Value size %d does not match expected %d" % (length, self.getSize()))
+                raise ValueError("Value size %d does not match expected %d" % (length, self.getSize()))
 
         return value
 
@@ -527,12 +531,20 @@ class DestFlagEncoder(IntegerWrapperEncoder):
     pduType = pdu_types.DestFlag
 
 class MessageStateEncoder(IntegerWrapperEncoder):
-    nullable = False
+    nullable = True
     fieldName = 'message_state'
     nameMap = constants.message_state_name_map
     valueMap = constants.message_state_value_map
     encoder = Int1Encoder()
     pduType = pdu_types.MessageState
+
+class UssdServiceOpEncoder(IntegerWrapperEncoder):
+    nullable = False
+    fieldName = 'ussd_service_op'
+    nameMap = constants.ussd_service_op_name_map
+    valueMap = constants.ussd_service_op_value_map
+    encoder = Int1Encoder()
+    pduType = pdu_types.ussdServiceOp
 
 class CallbackNumDigitModeIndicatorEncoder(IntegerWrapperEncoder):
     nullable = False
@@ -746,7 +758,8 @@ class OptionEncoder(IEncoder):
             T.alert_on_message_delivery: EmptyEncoder(),
             #T.its_reply_type: ItsReplyTypeEncoder(),
             # T.its_session_info: ItsSessionInfoEncoder(),
-            # T.ussd_service_op: UssdServiceOpEncoder(),
+            T.ussd_service_op: UssdServiceOpEncoder(),
+            T.test: Int16Encoder(),
         }
 
     def getLength(self):
@@ -777,11 +790,11 @@ class OptionEncoder(IEncoder):
         except PDUParseError, e:
             e.status = pdu_types.CommandStatus.ESME_RINVOPTPARAMVAL
             raise e
-        
+
         iAfterDecode = file.tell()
         parseLen = iAfterDecode - iBeforeDecode
         if parseLen != self.length:
-            raise PDUParseError("Invalid option length: labeled [%d] but parsed [%d]" % (self.length, parseLen), pdu_types.CommandStatus.ESME_RINVPARLEN)                
+            raise PDUParseError("Invalid option length: labeled [%d] but parsed [%d]" % (self.length, parseLen), pdu_types.CommandStatus.ESME_RINVPARLEN)
         return pdu_types.Option(tag, value)
         
 class PDUEncoder(IEncoder):
@@ -873,12 +886,11 @@ class PDUEncoder(IEncoder):
         pduKlass = operations.getPDUClass(headerParams['command_id'])
         pdu = pduKlass(headerParams['sequence_number'], headerParams['command_status'])
         self.decodeBody(file, pdu, headerParams['command_length'] - self.HEADER_LEN)
-        
         iAfterDecode = file.tell()
         parsedLen = iAfterDecode - iBeforeDecode
         if parsedLen != headerParams['command_length']:
             raise PDUCorruptError("Invalid command length: expected %d, parsed %d" % (headerParams['command_length'], parsedLen), pdu_types.CommandStatus.ESME_RINVCMDLEN)
-                    
+
         return pdu
     
     def decodeHeader(self, file):
@@ -897,7 +909,7 @@ class PDUEncoder(IEncoder):
         if pdu.status != pdu_types.CommandStatus.ESME_ROK:
             if pdu.noBodyOnError:
                 return
-        
+
         iBeforeMParams = file.tell()
         if len(pdu.mandatoryParams) > 0:
             mandatoryParams = self.decodeRequiredParams(pdu.mandatoryParams, self.getRequiredParamEncoders(pdu), file)
