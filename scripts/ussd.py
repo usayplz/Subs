@@ -94,6 +94,8 @@ class SMPP(object):
 
 def critical(msg, *args, **kwargs):
     logger.error(msg)
+    reactor.stop()
+    exit()
 
 
 if __name__ == '__main__':

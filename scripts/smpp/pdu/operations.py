@@ -252,7 +252,7 @@ class DeliverSM(PDUDataRequest):
         'message_state',
         'receipted_message_id',
         'ussd_service_op',
-        'test',
+        'value_3178',
     ]
 
 class DataSMResp(PDUResponse):

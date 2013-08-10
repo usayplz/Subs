@@ -4,7 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from datetime import datetime
 
-
 # Cron
 class MailingCron(models.Model):
     mask = models.CharField(_(u'Маска для задания'), help_text=u'Пример маски: "*-*-* 09:00:00" (ежедневно в 09:00)', default='*-*-* 09:00:00', max_length=255)
@@ -21,6 +20,7 @@ class MailingCron(models.Model):
 class Mailing(models.Model):
     code = models.SmallIntegerField(_(u'Код рассылки'), primary_key=True, default=0)
     name = models.CharField(_(u'Название рассылки'), max_length=255)
+    location = models.CharField(_(u'Идентификатор города'), max_length=20)
     cron = models.ManyToManyField(MailingCron, verbose_name=_(u'Время запуска'), null=True, blank=True)
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
     create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)

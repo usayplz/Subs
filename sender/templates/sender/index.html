@@ -2,5 +2,11 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Clear</h2>
+    <h2>Погода</h2>
+    <p>
+    {% for weather in current_weather %}
+        {{ weather }}<br>
+    {% endfor %}
+    </p>
+    <p>Данные погоды предоставляются сервисом <a href="http://pogoda.yandex.ru/">Яндекс.Погода</a></p>
 {% endblock %}

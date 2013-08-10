@@ -176,7 +176,8 @@ class OctetStringEncoder(PDUNullableFieldEncoder):
         length = len(value)
         if self.getSize() is not None:
             if length != self.getSize():
-                raise ValueError("Value size %d does not match expected %d" % (length, self.getSize()))
+                pass
+                #raise ValueError("Value size %d does not match expected %d" % (length, self.getSize()))
 
         return value
 
@@ -759,7 +760,7 @@ class OptionEncoder(IEncoder):
             #T.its_reply_type: ItsReplyTypeEncoder(),
             # T.its_session_info: ItsSessionInfoEncoder(),
             T.ussd_service_op: UssdServiceOpEncoder(),
-            T.test: Int16Encoder(),
+            T.value_3178: Int16Encoder(),
         }
 
     def getLength(self):

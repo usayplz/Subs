@@ -12,7 +12,7 @@ class MailingCronAdmin(admin.ModelAdmin):
 
 class MailingAdmin(admin.ModelAdmin):
     exclude = ('create_user',)
-    list_display = ('code', 'name', 'create_date', 'create_user')
+    list_display = ('code', 'name', 'location', 'create_date', 'create_user')
     formfield_overrides = {
         models.ManyToManyField: {'widget': CheckboxSelectMultiple},
     }
@@ -41,7 +41,7 @@ class SMSTaskAdmin(admin.ModelAdmin):
 
 class SMSTextAdmin(admin.ModelAdmin):
     list_display = ('sms_text', 'mailing', 'from_date', 'to_date')
-    list_filter = ('mailing',)
+    list_filter = ('mailing', 'from_date', 'to_date')
 
     class Meta:
         model = SMSText

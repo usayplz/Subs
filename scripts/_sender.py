@@ -62,10 +62,17 @@ class SMPP(object):
                 elif short_message in ['21','22','23','24','25','26']:
                     self.smstask.add_subscriber(source_addr, short_message)
                 else:
-                    task_id = self.smstask.add_new_task(source_addr, short_message)
-                    self.send_sms(smpp, source_addr, self.smstask.weather).addBoth(self.message_sent, task_id)
-                    self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
-                    # self.smstask.add_subscriber(source_addr)
+                    # send message and subscribe
+                    mailing_id = self.smstask.get_mailing_by_mobnum(source_addr)
+                    weather = self.smstask.get_current_weather(mailing_id)
+                    if weather != '':
+                        task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
+                        self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
+                        self.smstask.add_subscriber(source_addr, mailing_id)
+                        self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    else:
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+
             elif message_state == MessageState.DELIVERED:
                 self.smstask.update_task(2, '', message_id, message_id)
                 self.logger.info('DELIVERED: %s' % message_id)
@@ -118,8 +125,6 @@ class SMPP(object):
 
 def critical(msg, *args, **kwargs):
     logger.error(msg)
-    reactor.stop()
-    exit()
 
 
 if __name__ == '__main__':
