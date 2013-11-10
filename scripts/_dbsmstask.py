@@ -31,9 +31,7 @@ class dbSMSTask(object):
             # self.cursor.execute('SET TIME_ZONE = "+00:00"')
             self.connection_state = 1
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
 
     def add_new_task(self, mobnum, in_text, out_text, status):
         sql = '''
@@ -51,9 +49,7 @@ class dbSMSTask(object):
             })
             self.connection.commit()
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
             return -1
         return self.cursor.lastrowid
 
@@ -74,103 +70,111 @@ class dbSMSTask(object):
             })
             self.connection.commit()
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
 
-    def get_current_weather(self, mailing_id):
-        sms_text = ''
-        sql = '''
-            select 
-                location, sms_text 
-            from 
-                sender_mailing m LEFT OUTER JOIN sender_smstext s
-                on s.mailing_id = m.code and NOW() between from_date and to_date
-            where
-                m.code = %(mailing_id)s
-        '''
-        try:
-            self.cursor.execute(sql, {'mailing_id': mailing_id,})
-            sms_text, location = self.cursor.fetchone()
-            self.connection.commit()
-            if sms_text == '' and location != '':
-                sms_text = unicode(YandexWeather(location))
-        except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
-        return sms_text
+    def get_current_weather(self, mobnum):
+        return (3, u'Александровск')
+        # sms_text = ''
+        # sql = '''
+        #     select 
+        #         location, sms_text 
+        #     from 
+        #         sender_mailing m LEFT OUTER JOIN sender_smstext s
+        #         on s.code = m.code and NOW() between from_date and to_date
+        #     where
+        #         m.code = %(mailing_id)s
+        # '''
+        # try:
+        #     self.cursor.execute(sql, {'mailing_id': mailing_id,})
+        #     sms_text, location = self.cursor.fetchone()
+        #     self.connection.commit()
+        #     if sms_text == '' and location != '':
+        #         sms_text = unicode(YandexWeather(location))
+        # except db.Error, e:
+        #     raise_error(e)
+        # return sms_text
 
-    def load_today_weather(self):
-        sql = '''
-            select 
-                code, location
-            from 
-                sender_mailing
-        '''
+    # def load_today_weather(self):
+    #     sql = '''
+    #         select 
+    #             code, location
+    #         from 
+    #             sender_mailing
+    #     '''
+    #     sql_insert = '''
+    #         insert into sender_smstext 
+    #             (sms_text, mailing_id, from_date, to_date)
+    #         values 
+    #             (%(sms_text)s, %(mailing_id)s, convert_tz(STR_TO_DATE(%(from_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'), convert_tz(STR_TO_DATE(%(to_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'))
+    #     '''
+    #     try:
+    #         self.cursor.execute(sql, {})
+    #         for item in self.cursor.fetchall():
+    #             mailing_id, location = item
+
+    #             weather = YandexWeather(location)
+    #             for w in weather.get_weather_by_hour():
+    #                 from_date = u'%s %s:00:00' % (w['date'], w['hour_at'].zfill(2))
+    #                 to_date = u'%s %s:59:59' % (w['date'], w['hour_at'].zfill(2))
+    #                 weather_hour_at = u'%s: %s° C, %s, %s ветер %s м/с' % (w['city'], w['temperature'], w['condition'], w['wind_direction'], w['wind_speed'])
+    #                 # print "DEBUG: ", from_date, to_date, weather_hour_at
+    #                 self.cursor.execute(sql_insert, {
+    #                     'sms_text': weather_hour_at,
+    #                     'mailing_id': mailing_id, 
+    #                     'from_date': from_date,
+    #                     'to_date': to_date,
+    #                 })
+
+    #             self.connection.commit()
+    #             time.sleep(3)
+    #     except db.Error, e:
+    #         self.connection_state = 0
+    #         self.logger.critical(e)
+    #         raise
+    #         return -1
+    #     return 1
+
+    def subscribe(self, mobnum, mailing_id):
         sql_insert = '''
-            insert into sender_smstext 
-                (sms_text, mailing_id, from_date, to_date)
-            values 
-                (%(sms_text)s, %(mailing_id)s, convert_tz(STR_TO_DATE(%(from_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'), convert_tz(STR_TO_DATE(%(to_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'))
-        '''
-        try:
-            self.cursor.execute(sql, {})
-            for item in self.cursor.fetchall():
-                mailing_id, location = item
-
-                weather = YandexWeather(location)
-                for w in weather.get_weather_by_hour():
-                    from_date = u'%s %s:00:00' % (w['date'], w['hour_at'].zfill(2))
-                    to_date = u'%s %s:59:59' % (w['date'], w['hour_at'].zfill(2))
-                    weather_hour_at = u'%s: %s° C, %s, %s ветер %s м/с' % (w['city'], w['temperature'], w['condition'], w['wind_direction'], w['wind_speed'])
-                    # print "DEBUG: ", from_date, to_date, weather_hour_at
-                    self.cursor.execute(sql_insert, {
-                        'sms_text': weather_hour_at,
-                        'mailing_id': mailing_id, 
-                        'from_date': from_date,
-                        'to_date': to_date,
-                    })
-
-                self.connection.commit()
-                time.sleep(3)
-        except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
-            return -1
-        return 1
-
-    def add_subscriber(self, mobnum, mailing_id=None):
-        if mailing_id is None:
-            mailing_id = self.get_mailing_by_mobnum(mobnum)
-
-        sql = '''
             insert into sender_subscriber 
-                (mobnum, mailing_id, create_date) 
+                (mobnum, mailing_id, status, create_date) 
             values 
-                (%(mobnum)s, %(mailing_id)s, NOW())
+                (%(mobnum)s, %(mailing_id)s, 1, NOW())
+        '''
+        sql_update = '''
+            update 
+                sender_subscriber 
+            set
+                status = 1
+            where 
+                mobnum = %(mobnum)s 
+                and mailing_id = %(mailing_id)s 
         '''
         try:
-            self.cursor.execute(sql, { 
+            self.cursor.execute(sql_update, { 
                 'mobnum': mobnum,
                 'mailing_id': mailing_id,
             })
+            if self.cursor.rowcount == 0:
+                self.cursor.execute(sql_insert, { 
+                    'mobnum': mobnum,
+                    'mailing_id': mailing_id,
+                })
             self.connection.commit()
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
             return 0
         return 1
 
-    def del_subscriber(self, mobnum):
+    def unsubscribe(self, mobnum):
         """
             unsubscriber from all subs
         """
         sql = '''
-            delete from 
+            update 
                 sender_subscriber 
+            set
+                status = 1
             where 
                 mobnum = %(mobnum)s 
         '''
@@ -178,34 +182,9 @@ class dbSMSTask(object):
             self.cursor.execute(sql, {'mobnum': mobnum,})
             self.connection.commit()
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
             return 0
         return 1
-
-    def get_mailing_by_mobnum(self, mobnum):
-        """
-            unsubscriber from all subs
-        """
-        sql = '''
-            select 
-                mailing_id 
-            from 
-                sender_mailingnumber 
-            where 
-                %(mobnum)s between number_from and number_to
-        '''
-        try:
-            self.cursor.execute(sql, {'mobnum': mobnum,})
-            self.connection.commit() # or will be use a cache
-        except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
-            return 0
-
-        return self.cursor.fetchone()[0]
 
     def check_tasks(self):
         sql = '''
@@ -221,12 +200,16 @@ class dbSMSTask(object):
             self.cursor.execute(sql, {})
             self.connection.commit() # or will be use a cache
         except db.Error, e:
-            self.connection_state = 0
-            self.logger.critical(e)
-            raise
+            raise_error(e)
             return []
 
         return self.cursor.fetchall()
+
+    def raise_error(error):
+        self.connection_state = 0
+        self.logger.critical(e)
+        raise
+
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
@@ -234,7 +217,7 @@ def main(args=None):
 
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
-    tasker.load_today_weather()
+    # tasker.load_today_weather()
 
 if __name__ == '__main__':
     main()

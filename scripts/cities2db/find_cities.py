@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import re, codecs
+import re, codecs, string
 import MySQLdb as db
 
 
@@ -17,16 +17,15 @@ cursor = connection.cursor()
 cursor.execute('SET SESSION query_cache_type = OFF')
 
 
-def insert(code, name):
+def update(code, bwc_location_code):
     sql = '''
-        insert into sender_mailing
-            (name, bwc_location_code, create_date)
-        values
-            (%(name)s, %(code)s, NOW())
+        update sender_mailing
+        set weather_location_code = %(code)s
+        where bwc_location_code = %(bwc_location_code)s
     '''
     try:
         cursor.execute(sql, {
-            'name': name,
+            'bwc_location_code': bwc_location_code,
             'code': code,
         })
         connection.commit()
@@ -34,9 +33,30 @@ def insert(code, name):
         connection_state = 0
         return -1
 
-filename = 'list_cities.csv'
+filename = 'cities.xml'
+sql = '''
+    select 
+        name, bwc_location_code
+    from 
+        sender_mailing
+'''
+cursor.execute(sql, {})
+for item in cursor.fetchall():
+    name, bwc_location_code = item
+    print name, bwc_location_code
+    find = unicode('>'+name+'<')+u''
+    f = codecs.open(filename, "r", 'utf-8')
+    for line in f:
+        line = line.strip()
+        if find in line:
+            line = line[10:]
+            line = line[:string.find(line, '"')]
+            # print line
+            update(line, bwc_location_code)
+            
+exit()
+
 f = codecs.open(filename, "r", 'utf-8')
-pre_point = u''
 for line in f:
     line = line.strip()
     m = re.match(ur'(\w+),(("[А-Яа-я ,-\.]+\s([А-Яа-я-ё]+)")|("[А-Яа-я ,-\.]+\.([А-Яа-я-ё]+)")|([А-Яа-я-ё]+)),', line, re.U)
@@ -46,6 +66,3 @@ for line in f:
         else:
             point = m.groups()[3].encode('utf-8')
         print m.groups()[0].encode('utf-8'), point
-        if pre_point != point:
-            insert(m.groups()[0].encode('utf-8'), point)
-        pre_point = point

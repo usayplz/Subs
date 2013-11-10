@@ -8,7 +8,7 @@ from smpp.twisted.config import SMPPClientConfig
 from twisted.python import failure
 from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
-import dbsmstask, pid
+import _dbsmstask, pid
 
 
 class SMPP(object):
@@ -21,7 +21,7 @@ class SMPP(object):
         self.smpp_config = smpp_config
         self.db_config = db_config
         self.logger = logger
-        self.smstask = dbsmstask.dbSMSTask(db_config, logger)
+        self.smstask = _dbsmstask.dbSMSTask(db_config, logger)
 
     @defer.inlineCallbacks
     def run(self):
@@ -58,17 +58,14 @@ class SMPP(object):
 
                 # checking
                 if short_message in [u'-pogoda', u'-погода']:
-                    self.smstask.del_subscriber(source_addr)
-                elif short_message in ['21','22','23','24','25','26']:
-                    self.smstask.add_subscriber(source_addr, short_message)
+                    self.smstask.unsubscribe(source_addr)
                 else:
                     # send message and subscribe
-                    mailing_id = self.smstask.get_mailing_by_mobnum(source_addr)
-                    weather = self.smstask.get_current_weather(mailing_id)
+                    (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
                     if weather != '':
                         task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
                         self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
-                        self.smstask.add_subscriber(source_addr, mailing_id)
+                        self.smstask.subscribe(source_addr, mailing_id)
                         self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     else:
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
@@ -138,7 +135,7 @@ if __name__ == '__main__':
         pid.write_pid(PID)
 
     # logger
-    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
+    log_file = os.path.join(os.path.dirname(__file__), 'logs', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
     logging.basicConfig(
         level=logging.INFO, 
         format="%(asctime)-15s %(levelname)s %(message)s",

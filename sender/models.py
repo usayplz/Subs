@@ -4,24 +4,14 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from datetime import datetime
 
-# Cron
-class MailingCron(models.Model):
-    mask = models.CharField(_(u'Маска для задания'), help_text=u'Пример маски: "*-*-* 09:00:00" (ежедневно в 09:00)', default='*-*-* 09:00:00', max_length=255)
-
-    def __unicode__(self):
-        return self.mask
-
-    class Meta:
-        verbose_name = _(u'Время запуска')
-        verbose_name_plural = _(u'Время запуска')
-
 
 # Рассылки
 class Mailing(models.Model):
-    code = models.SmallIntegerField(_(u'Код рассылки'), primary_key=True, default=0)
+    # code = models.SmallIntegerField(_(u'Код рассылки'), primary_key=True, default=0)
     name = models.CharField(_(u'Название рассылки'), max_length=255)
-    location = models.CharField(_(u'Идентификатор города'), max_length=20)
-    cron = models.ManyToManyField(MailingCron, verbose_name=_(u'Время запуска'), null=True, blank=True)
+    bwc_location_code = models.CharField(_(u'Идентификатор города в bwc'), max_length=20, null=True, blank=True)
+    weather_location_code = models.CharField(_(u'Идентификатор города на сайте'), max_length=20, null=True, blank=True)
+
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
     create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)
 
@@ -29,32 +19,21 @@ class Mailing(models.Model):
         return self.name
 
     class Meta:
-        ordering = ['code']
+        ordering = ['name']
         verbose_name = _(u'Рассылка')
         verbose_name_plural = _(u'Рассылки')
 
 
-# Диапозоны номеров
-class MailingNumber(models.Model):
-    mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
-    number_from = models.CharField(_(u'С номера'), max_length=12)
-    number_to = models.CharField(_(u'По номер'), max_length=12)
-    create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
-    create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)
-
-    def __unicode__(self):
-        return self.number_from
-
-    class Meta:
-        ordering = ['number_from', 'number_to']
-        verbose_name = _(u'Диапозон номеров')
-        verbose_name_plural = _(u'Диапозоны номеров')
-
-
 # Привязка мобильных к рассылкам
 class Subscriber(models.Model):
+    SUBS_STATUSES = (
+        (0, u'подписан'),
+        (1, u'не подписан'),
+    )
+
     mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
     mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
+    status = models.SmallIntegerField(_(u'Статус'), choices=SUBS_STATUSES, default=0)
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
 
     def __unicode__(self):
@@ -79,11 +58,11 @@ class SMSTask(models.Model):
     mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
     in_text = models.TextField(_(u'Текст входящего сообщения'), null=True, blank=True)
     out_text = models.TextField(_(u'Сообщение для отправки'))
-    delivery_date = models.DateTimeField(_(u'Дата доставки'), default=datetime.utcnow)
+    delivery_date = models.DateTimeField(_(u'Дата доставки'), auto_now_add=True)
     sent_date = models.DateTimeField(_(u'Дата отправки'), null=True, blank=True)
     status = models.SmallIntegerField(_(u'Статус'), choices=SMS_STATUSES, default=0)
     message_id = models.IntegerField(_(u'Номер сообщения'), null=True, blank=True)
-    send_error = models.TextField(_(u'Текст ошибки'), null=True, blank=True)
+    error = models.TextField(_(u'Текст ошибки'), null=True, blank=True)
 
     def __unicode__(self):
         return self.mobnum
@@ -93,17 +72,3 @@ class SMSTask(models.Model):
         verbose_name = _(u'Очередь сообщений')
         verbose_name_plural = _(u'Очередь сообщений')
 
-
-# Тексты сообщений
-class SMSText(models.Model):
-    sms_text = models.TextField(_(u'Текст сообщения'))
-    mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
-    from_date = models.DateTimeField(_(u'Дата начала периода'), null=True, blank=True)
-    to_date = models.DateTimeField(_(u'Дата конца периода'), null=True, blank=True)
-
-    def __unicode__(self):
-        return self.sms_text
-
-    class Meta:
-        verbose_name = _(u'Текст сообщения')
-        verbose_name_plural = _(u'Тексты сообщений')
