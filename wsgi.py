@@ -1,4 +1,6 @@
-import os
+import os, sys
+
+sys.path.append('/var/www/subs')
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
