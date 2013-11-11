@@ -58,14 +58,18 @@ class SMPP(object):
 
                 # checking
                 if short_message in [u'-pogoda', u'-погода']:
-                    self.smstask.del_subscriber(source_addr)
-                elif short_message in ['21','22','23','24','25','26']:
-                    self.smstask.add_subscriber(source_addr, short_message)
+                    self.smstask.unsubscribe(source_addr)
                 else:
-                    task_id = self.smstask.add_new_task(source_addr, short_message)
-                    self.send_sms(smpp, source_addr, self.smstask.weather).addBoth(self.message_sent, task_id)
-                    self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
-                    # self.smstask.add_subscriber(source_addr)
+                    # send message and subscribe
+                    (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
+                    if weather != '':
+                        task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
+                        self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
+                        self.smstask.subscribe(source_addr, mailing_id)
+                        self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    else:
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+
             elif message_state == MessageState.DELIVERED:
                 self.smstask.update_task(2, '', message_id, message_id)
                 self.logger.info('DELIVERED: %s' % message_id)
@@ -131,7 +135,7 @@ if __name__ == '__main__':
         pid.write_pid(PID)
 
     # logger
-    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
+    log_file = os.path.join(os.path.dirname(__file__), 'logs', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'sender.log'))
     logging.basicConfig(
         level=logging.INFO, 
         format="%(asctime)-15s %(levelname)s %(message)s",
