@@ -2,16 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import MySQLdb as db
-import logging, time
+import logging
+import time
+from bwc_city import BWCCity
 from yandex_weather import YandexWeather
 
+
 class dbSMSTask(object):
+    WEATHER_TIMEOUT = 30*60     # 30 min
 
     def __init__(self, db_config, logger):
         self.db_config = db_config
         self.logger = logger
         self.connection_state = 0
         self.connect()
+        self.weather = {}
 
     def __del__(self):
         self.connection.commit()
@@ -21,9 +26,9 @@ class dbSMSTask(object):
         try:
             self.connection = db.connect(
                 host=self.db_config.get('host'),
-                user=self.db_config.get('user'), 
-                passwd=self.db_config.get('passwd'), 
-                db=self.db_config.get('db'), 
+                user=self.db_config.get('user'),
+                passwd=self.db_config.get('passwd'),
+                db=self.db_config.get('db'),
                 charset='utf8',
             )
             self.cursor = self.connection.cursor()
@@ -62,7 +67,7 @@ class dbSMSTask(object):
             where message_id = %(message_id)s or id = %(task_id)s
         '''
         try:
-            self.cursor.execute(sql, { 
+            self.cursor.execute(sql, {
                 "status": status,
                 "message_id": message_id,
                 "task_id": task_id,
@@ -73,38 +78,85 @@ class dbSMSTask(object):
             raise_error(e)
 
     def get_current_weather(self, mobnum):
-        return (3, u'Александровск')
-        # sms_text = ''
-        # sql = '''
-        #     select 
-        #         location, sms_text 
-        #     from 
-        #         sender_mailing m LEFT OUTER JOIN sender_smstext s
-        #         on s.code = m.code and NOW() between from_date and to_date
-        #     where
-        #         m.code = %(mailing_id)s
-        # '''
-        # try:
-        #     self.cursor.execute(sql, {'mailing_id': mailing_id,})
-        #     sms_text, location = self.cursor.fetchone()
-        #     self.connection.commit()
-        #     if sms_text == '' and location != '':
-        #         sms_text = unicode(YandexWeather(location))
-        # except db.Error, e:
-        #     raise_error(e)
-        # return sms_text
+        sql = '''
+            select
+                weather_location_code
+            from
+                sender_mailing
+            where
+                mailing_id = %(mailing_id)s
+        '''
+        try:
+            mailing_id = self.get_mailing_id(mobnum)
+            if mailing_id:
+                (weather, last_date) = self.weather.get(mailing_id, (None, None))
+                if weather and last_date and time.time()-self.weather_timer < self.WEATHER_TIMEOUT:
+                    return (mailing_id, weather)
+                else:
+                    self.cursor.execute(sql, {'mailing_id': mailing_id,})
+                    location = self.cursor.fetchone()
+                    self.connection.commit()
+                    if location:
+                        weather = YandexWeather(location)
+                        if weather:
+                            self.weather[mailing_id] = (weather, time.time())
+                    return self.weather.get(mailing_id, (None, None))
+            else:
+                return (None, None)
+            self.connection.commit()
+        except db.Error, e:
+            raise_error(e)
+
+    def get_mailing_id(self, mobnum):
+        sql_mailing_id = '''
+            select
+                mailing_id, status
+            from
+                sender_subscriber
+            where
+                mobnum = %(mobnum)s
+            order by
+                create_date desc
+            limit 1
+        '''
+        sql_bwc_code = '''
+            select
+                id, status
+            from
+                sender_mailing
+            where
+                bwc_location_code = %(bwc_location_code)s
+            order by
+                create_date desc
+            limit 1
+        '''
+        try:
+            self.cursor.execute(sql_mailing_id, {'mobnum': mobnum,})
+            mailing_id, status = self.cursor.fetchone()
+            self.connection.commit()
+            if mailing_id:
+                return mailing_id
+            else:
+                bwc_location_code = BWCCity(mobnum)
+                self.cursor.execute(sql_bwc_code, {'bwc_location_code': bwc_location_code,})
+                mailing_id, status = self.cursor.fetchone()
+                self.connection.commit()
+                return mailing_id or None
+        except db.Error, e:
+            raise_error(e)
+
 
     # def load_today_weather(self):
     #     sql = '''
-    #         select 
+    #         select
     #             code, location
-    #         from 
+    #         from
     #             sender_mailing
     #     '''
     #     sql_insert = '''
-    #         insert into sender_smstext 
+    #         insert into sender_smstext
     #             (sms_text, mailing_id, from_date, to_date)
-    #         values 
+    #         values
     #             (%(sms_text)s, %(mailing_id)s, convert_tz(STR_TO_DATE(%(from_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'), convert_tz(STR_TO_DATE(%(to_date)s, '%%Y-%%m-%%d %%T'), '+09:00', '+00:00'))
     #     '''
     #     try:
@@ -120,7 +172,7 @@ class dbSMSTask(object):
     #                 # print "DEBUG: ", from_date, to_date, weather_hour_at
     #                 self.cursor.execute(sql_insert, {
     #                     'sms_text': weather_hour_at,
-    #                     'mailing_id': mailing_id, 
+    #                     'mailing_id': mailing_id,
     #                     'from_date': from_date,
     #                     'to_date': to_date,
     #                 })
@@ -136,27 +188,27 @@ class dbSMSTask(object):
 
     def subscribe(self, mobnum, mailing_id):
         sql_insert = '''
-            insert into sender_subscriber 
-                (mobnum, mailing_id, status, create_date) 
-            values 
+            insert into sender_subscriber
+                (mobnum, mailing_id, status, create_date)
+            values
                 (%(mobnum)s, %(mailing_id)s, 1, NOW())
         '''
         sql_update = '''
-            update 
-                sender_subscriber 
+            update
+                sender_subscriber
             set
                 status = 1
-            where 
-                mobnum = %(mobnum)s 
-                and mailing_id = %(mailing_id)s 
+            where
+                mobnum = %(mobnum)s
+                and mailing_id = %(mailing_id)s
         '''
         try:
-            self.cursor.execute(sql_update, { 
+            self.cursor.execute(sql_update, {
                 'mobnum': mobnum,
                 'mailing_id': mailing_id,
             })
             if self.cursor.rowcount == 0:
-                self.cursor.execute(sql_insert, { 
+                self.cursor.execute(sql_insert, {
                     'mobnum': mobnum,
                     'mailing_id': mailing_id,
                 })
@@ -171,12 +223,12 @@ class dbSMSTask(object):
             unsubscriber from all subs
         """
         sql = '''
-            update 
-                sender_subscriber 
+            update
+                sender_subscriber
             set
                 status = 1
-            where 
-                mobnum = %(mobnum)s 
+            where
+                mobnum = %(mobnum)s
         '''
         try:
             self.cursor.execute(sql, {'mobnum': mobnum,})
@@ -190,7 +242,7 @@ class dbSMSTask(object):
         sql = '''
             select
                 id, mobnum, out_text
-            from 
+            from
                 sender_smstask
             where
                 status = 0
