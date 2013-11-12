@@ -67,7 +67,11 @@ class SMPP(object):
                         self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
                         self.smstask.subscribe(source_addr, mailing_id)
                         self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    elif mailing_id:
+                        self.send_sms(smpp, source_addr, u'Для Вашего нас. пункта нет погоды.').addBoth(self.message_sent, task_id)
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     else:
+                        self.send_sms(smpp, source_addr, u'Нас. пункт не определен. Отправьте смс с названием на 8181.').addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
 
             elif message_state == MessageState.DELIVERED:

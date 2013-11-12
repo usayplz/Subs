@@ -154,7 +154,7 @@ class dbSMSTask(object):
             update
                 sender_subscriber
             set
-                status = 1
+                status = 0
             where
                 mobnum = %(mobnum)s
                 and mailing_id = %(mailing_id)s
