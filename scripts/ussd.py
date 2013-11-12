@@ -59,7 +59,22 @@ class SMPP(object):
                 else:
                     my_num = dest_addr
 
-                # self.logger.info('current my_num = %s' % my_num)
+                self.logger.info('current my_num = %s' % my_num)
+                if my_num in '*818#':
+                    (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
+                    if weather != '':
+                        task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
+                        self.send_ussd(smpp, my_num, source_addr, weather)
+                        self.smstask.subscribe(source_addr, mailing_id)
+                        self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    elif mailing_id:
+                        self.send_ussd(smpp, my_num, source_addr, u'Для Вашего нас. пункта нет погоды.')
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    else:
+                        self.send_ussd(smpp, my_num, source_addr, u'Нас. пункт не определен. Отправьте смс с названием на 8181.')
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                    return 
+
                 # if my_num in ['*8181*2#']:
                     # self.send_ussd(smpp, my_num, source_addr, u'1. Иркутск\n2. Ангарск\n3. Братск\n4. Байкальск\n5. Улан-Удэ\n6. Аршан')
                 # elif my_num in ['*8181*3#']:
@@ -108,7 +123,7 @@ if __name__ == '__main__':
         pid.write_pid(PID)
 
     # logger
-    log_file = os.path.join(os.path.dirname(__file__), 'log', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'ussd.log'))
+    log_file = os.path.join(os.path.dirname(__file__), 'logs', '%s_%s' % (datetime.date.today().strftime('%d%m%Y'), 'ussd.log'))
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)-15s %(levelname)s %(message)s",
