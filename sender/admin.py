@@ -9,6 +9,7 @@ class MailingAdmin(admin.ModelAdmin):
     exclude = ('create_user',)
     list_display = ('name', 'bwc_location_code', 'weather_location_code', 'create_date', 'create_user',)
     list_filter = ('create_user',)
+    list_per_page = 1000
     formfield_overrides = {
         models.ManyToManyField: {'widget': CheckboxSelectMultiple},
     }

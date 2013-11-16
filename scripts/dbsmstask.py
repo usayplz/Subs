@@ -139,7 +139,7 @@ class dbSMSTask(object):
                 self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
                 row = self.cursor.fetchone()
                 self.connection.commit()
-                return row[0]
+                return row[0] if row else None
         except db.Error, e:
             self.raise_error(e)
 

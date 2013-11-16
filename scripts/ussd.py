@@ -17,12 +17,6 @@ class SMPP(object):
     SOURCE_ADDR_NPI = AddrNpi.ISDN
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
     DEST_ADDR_NPI = AddrNpi.ISDN
-    MENU = {
-        u'*8181#': u'1.Погода в моем городе 2.Погода в других городах 3.Отписаться 0.Мои подписки',
-        u'2': u'1. Иркутск\n2. Ангарск\n3. Братск\n4. Байкальск\n5. Улан-Удэ\n6. Аршан',
-        u'3': u'Вы отписаны от рассылки',
-        u'0': u'Мои подписки',
-    }
 
     def __init__(self, smpp_config, db_config, logger):
         self.smpp_config = smpp_config
@@ -62,35 +56,23 @@ class SMPP(object):
                 self.logger.info('current my_num = %s' % my_num)
                 if my_num in '*818#':
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
-                    if weather != '':
+                    if weather:
+                        self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
                         task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
-                        self.send_ussd(smpp, my_num, source_addr, weather)
                         self.smstask.subscribe(source_addr, mailing_id)
                         self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     elif mailing_id:
-                        self.send_ussd(smpp, my_num, source_addr, u'Для Вашего нас. пункта нет погоды.')
-                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                        sms_text = u'Для Вашего нас. пункта нет погоды.'
+                        self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
+                        self.logger.info('ERROR: cannot get weather (mobnum, text): %s, %s' % (source_addr, weather))
+                        task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
                     else:
-                        self.send_ussd(smpp, my_num, source_addr, u'Нас. пункт не определен. Отправьте смс с названием на 8181.')
-                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
-                    return 
+                        sms_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
+                        self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
+                        self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
+                        task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
 
-                # if my_num in ['*8181*2#']:
-                    # self.send_ussd(smpp, my_num, source_addr, u'1. Иркутск\n2. Ангарск\n3. Братск\n4. Байкальск\n5. Улан-Удэ\n6. Аршан')
-                # elif my_num in ['*8181*3#']:
-                    # self.smstask.unsubscribe(source_addr)
-                    # self.send_ussd(smpp, my_num, source_addr, u'Вы отписаны от всех рассылок.')
-                # elif my_num in ['*8181*2*1#','*8181*2*2#','*8181*2*3#','*8181*2*4#','*8181*2*5#','*8181*2*6#']:
-                    # self.smstask.subscribe(source_addr, u'2%s' % short_message)
-                    # self.send_ussd(smpp, my_num, source_addr, u'Вы подписаны на рассылку.')
-                # else:
-                    # my_num = self.ESME_NUM
-                    # self.send_ussd(smpp, my_num, source_addr, u'1.Погода в моем городе\n2.Другие города\n3.Отписаться\n0.Мои подписки')
-                #     # task_id = self.smstask.add_new_task(source_addr, short_message)
-                #     self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, self.smstask.weather))
-                #     # self.smstask.subscribe(source_addr)
-
-    def send_ussd(self, smpp, my_num, source_addr, short_message):
+    def send_ussd(self, smpp, my_num, source_addr, short_message, ussd_service_op):
         short_message = short_message.encode('utf_16_be')
 
         submit_pdu = SubmitSM(
@@ -104,7 +86,7 @@ class SMPP(object):
             dest_addr_npi=self.DEST_ADDR_NPI,
             esm_class=EsmClass(EsmClassMode.DEFAULT, EsmClassType.DEFAULT),
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2), #SMS_DEFAULT_ALPHABET),
-            ussd_service_op=ussdServiceOp.USSR_REQUEST,
+            ussd_service_op=ussd_service_op,
         )
         return smpp.sendDataRequest(submit_pdu)
 
