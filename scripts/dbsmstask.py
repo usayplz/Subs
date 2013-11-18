@@ -90,7 +90,7 @@ class dbSMSTask(object):
             mailing_id = self.get_mailing_id(mobnum)
             if mailing_id:
                 (weather, last_date) = self.weather.get(mailing_id, (None, None))
-                if weather and last_date and time.time()-self.weather_timer < self.WEATHER_TIMEOUT:
+                if weather and last_date and time.time()-self.weather.get(mailing_id, (None, 0))[1] < self.WEATHER_TIMEOUT:
                     return (mailing_id, weather)
                 else:
                     self.cursor.execute(sql, { "mailing_id": mailing_id, })
