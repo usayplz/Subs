@@ -144,11 +144,14 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def subscribe(self, mobnum, mailing_id):
+        sql_select = '''
+            select count(*) from sender_subscriber where mobnum = %(mobnum)s and mailing_id = %(mailing_id)s
+        '''
         sql_insert = '''
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date)
             values
-                (%(mobnum)s, %(mailing_id)s, 1, NOW())
+                (%(mobnum)s, %(mailing_id)s, 0, NOW())
         '''
         sql_update = '''
             update
@@ -160,11 +163,17 @@ class dbSMSTask(object):
                 and mailing_id = %(mailing_id)s
         '''
         try:
-            self.cursor.execute(sql_update, {
+            self.cursor.execute(sql_select, {
                 'mobnum': mobnum,
                 'mailing_id': mailing_id,
             })
-            if self.cursor.rowcount == 0:
+            row = self.cursor.fetchone()
+            if row[0] > 0:
+                self.cursor.execute(sql_update, {
+                    'mobnum': mobnum,
+                    'mailing_id': mailing_id,
+                })
+            else:
                 self.cursor.execute(sql_insert, {
                     'mobnum': mobnum,
                     'mailing_id': mailing_id,

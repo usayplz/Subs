@@ -10,7 +10,8 @@ class Mailing(models.Model):
     # code = models.SmallIntegerField(_(u'Код рассылки'), primary_key=True, default=0)
     name = models.CharField(_(u'Название рассылки'), max_length=255)
     bwc_location_code = models.CharField(_(u'Идентификатор города в bwc'), max_length=20, null=True, blank=True)
-    weather_location_code = models.CharField(_(u'Идентификатор города на сайте'), max_length=20, null=True, blank=True)
+    weather_location_code = models.CharField(_(u'Идентификатор города yandex'), max_length=20, null=True, blank=True)
+    yrno_location_code = models.CharField(_(u'Идентификатор города yr.no'), max_length=255, null=True, blank=True)
 
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
     create_user = models.ForeignKey(User, verbose_name=_(u'Создатель'), null=True, blank=True)

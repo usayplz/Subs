@@ -5,9 +5,16 @@ from django.forms import CheckboxSelectMultiple
 from django.db import models
 
 
+def yarno_url(obj):
+    if obj.yrno_location_code:
+        return u'<a target="_blank" href="http://www.yr.no/place/%s">%s</a>' % (obj.yrno_location_code, obj.yrno_location_code)
+    return obj.yrno_location_code
+yarno_url.short_description = u'Идентификатор города yr.no'
+yarno_url.allow_tags = True
+
 class MailingAdmin(admin.ModelAdmin):
     exclude = ('create_user',)
-    list_display = ('name', 'bwc_location_code', 'weather_location_code', 'create_date', 'create_user',)
+    list_display = ('name', 'bwc_location_code', 'weather_location_code', yarno_url, 'create_date', 'create_user',)
     list_filter = ('create_user',)
     list_per_page = 1000
     formfield_overrides = {

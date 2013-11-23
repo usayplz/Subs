@@ -3,6 +3,8 @@
 
 import re, codecs, string
 import MySQLdb as db
+import urllib2
+import time
 
 
 db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
@@ -17,52 +19,64 @@ cursor = connection.cursor()
 cursor.execute('SET SESSION query_cache_type = OFF')
 
 
-def update(code, bwc_location_code):
+def update(id, code):
     sql = '''
         update sender_mailing
-        set weather_location_code = %(code)s
-        where bwc_location_code = %(bwc_location_code)s
+        set yrno_location_code = %(code)s
+        where id = %(id)s
     '''
     try:
         cursor.execute(sql, {
-            'bwc_location_code': bwc_location_code,
+            'id': id,
             'code': code,
         })
         connection.commit()
     except db.Error, e:
-        connection_state = 0
         return -1
 
-filename = 'cities.xml'
+# f = codecs.open('1.txt', "r", 'utf-8')
+# for line in f:
+#     line = line.strip()
+#     if u'/place/Russia/' in line:
+#         code = re.findall(r'/place/Russia/([a-zA-Z0-9~\-_/]+)"', line)
+#         print code
+#         # print line
+#         break
+#     if u'/sted/Russland/' in line:
+#         code = re.findall(r'/sted/Russland/([a-zA-Z0-9~\-_/]+)"', line)
+#         print code
+#         break
+# exit()
+
+
+yr_search_url = u'http://www.yr.no/soek/soek.aspx?sted=%s'
 sql = '''
     select
-        name, bwc_location_code
+        id, name, bwc_location_code
     from
         sender_mailing
+    where
+        yrno_location_code is null
+    order by
+        name
 '''
 cursor.execute(sql, {})
-for item in cursor.fetchall():
-    name, bwc_location_code = item
-    print name, bwc_location_code
-    find = unicode('>'+name+'<')+u''
-    f = codecs.open(filename, "r", 'utf-8')
-    for line in f:
-        line = line.strip()
-        if find in line:
-            line = line[10:]
-            line = line[:string.find(line, '"')]
-            # print line
-            update(line, bwc_location_code)
+for row in cursor.fetchall():
+    id, name, bwc_location_code = row
+    name = name.replace(u' ', u'+')
+    print name.encode('utf-8')
+    search = yr_search_url % name
+    response = urllib2.urlopen(search.encode('utf-8'))
+    html = response.read()
+    response.close()
+    code = re.findall(r'/place/Russia/([a-zA-Z0-9~\-_\'\`/]+)"', html)
+    if not code:
+        code = re.findall(r'/sted/Russland/([a-zA-Z0-9~\-_\'\`/]+)"', html)
+    print code
+    if code:
+        update(id, u'Russia/%s' % code[0])
+    else:
+        update(id, u'---')
+    time.sleep(10)
 
 exit()
-
-f = codecs.open(filename, "r", 'utf-8')
-for line in f:
-    line = line.strip()
-    m = re.match(ur'(\w+),(("[А-Яа-я ,-\.]+\s([А-Яа-я-ё]+)")|("[А-Яа-я ,-\.]+\.([А-Яа-я-ё]+)")|([А-Яа-я-ё]+)),', line, re.U)
-    if m:
-        if m.groups()[3] is None:
-            point = m.groups()[1].encode('utf-8')
-        else:
-            point = m.groups()[3].encode('utf-8')
-        print m.groups()[0].encode('utf-8'), point

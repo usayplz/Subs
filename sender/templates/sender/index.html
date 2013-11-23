@@ -2,11 +2,12 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Погода</h2>
+    <h2>Weather</h2>
     <p>
     {% for weather in current_weather %}
         {{ weather }}<br>
     {% endfor %}
     </p>
-    <p>Данные погоды предоставляются сервисом <a href="http://pogoda.yandex.ru/">Яндекс.Погода</a></p>
+<!--     <p>Данные погоды предоставляются сервисом <a href="http://pogoda.yandex.ru/">Яндекс.Погода</a></p> -->
+    <a href="http://www.yr.no/">Weather forecast from yr.no, delivered by the Norwegian Meteorological Institute and the NRK</a>
 {% endblock %}
