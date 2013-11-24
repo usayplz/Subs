@@ -6,7 +6,7 @@ import logging
 import time
 from bwc_city import BWCCity
 from yandex_weather import YandexWeather
-
+from yrno_weather import yrnoWeather
 
 class dbSMSTask(object):
     WEATHER_TIMEOUT = 30*60     # 30 min
@@ -80,7 +80,7 @@ class dbSMSTask(object):
     def get_current_weather(self, mobnum):
         sql = '''
             select
-                weather_location_code, name
+                weather_location_code, yrno_location_code, name
             from
                 sender_mailing
             where
@@ -97,8 +97,9 @@ class dbSMSTask(object):
                     row = self.cursor.fetchone()
                     self.connection.commit()
                     if row:
-                        location, name = row
+                        location, yrno_location, name = row
                         weather = unicode(YandexWeather(location))
+                        # weather = unicode(yrnoWeather(yrno_location))
                         if weather:
                             self.weather[mailing_id] = (weather, time.time())
                     return mailing_id, self.weather.get(mailing_id, (None, None))[0]
