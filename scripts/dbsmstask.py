@@ -98,10 +98,10 @@ class dbSMSTask(object):
                     self.connection.commit()
                     if row:
                         location, yrno_location, name = row
-                        weather = unicode(YandexWeather(location))
-                        # weather = unicode(yrnoWeather(yrno_location))
+                        # weather = unicode(YandexWeather(location))
+                        weather = unicode(yrnoWeather(yrno_location))
                         if weather:
-                            self.weather[mailing_id] = (weather, time.time())
+                            self.weather[mailing_id] = (u'%s: %s' % (name, weather), time.time())
                     return mailing_id, self.weather.get(mailing_id, (None, None))[0]
             else:
                 return (None, None)
