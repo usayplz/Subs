@@ -229,6 +229,26 @@ class dbSMSTask(object):
         self.logger.critical(error)
         raise
 
+    def get_all_city(self):
+        sql = '''
+            select
+                id, name, bwc_location_code, weather_location_code,create_date, create_user_id, yrno_location_code
+            from
+                sender_mailing
+            where 
+                id > 476
+            order by
+                id
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit() # or will be use a cache
+        except db.Error, e:
+            self.raise_error(e)
+            return []
+
+        return self.cursor.fetchall()
+
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
@@ -236,7 +256,21 @@ def main(args=None):
 
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
-    print tasker.get_current_weather('79021702030')
+    tasks = tasker.get_all_city()
+    for task in tasks:
+        id, name, bwc_location_code, weather_location_code,create_date, create_user_id, yrno_location_code = task
+        yandex = YandexWeather(weather_location_code)
+        yrno = yrnoWeather(yrno_location_code)
+        temp1 = ''
+        if yandex.fact_temperature:
+            temp1 = yandex.fact_temperature
+        temp2 = ''
+        if yrno.fact_temperature:
+            temp2 = yrno.fact_temperature
+        print '%s|%s|%s' % (name.encode('utf8'), temp1.encode('utf8'), temp2.encode('utf8'))
+        time.sleep(4)
+        
+    # tasker.get_current_weather('79021702030')
     # tasker.load_today_weather()
 
 if __name__ == '__main__':

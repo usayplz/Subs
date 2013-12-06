@@ -7,27 +7,28 @@ from xml.etree import ElementTree
 
 class yrnoWeather():
     def __init__(self, location):
-        self.yrno_ng = '{http://weather.yandex.ru/forecast}%s'
         self.weather_url = 'http://www.yr.no/place/%s/forecast.xml' % (location)
-        self.weather_url = 'cities2db/forecast.xml'
+        self.fact_temperature = ''
+        self.fact_condition = ''
+        self.fact_wind_direction = ''
+        self.fact_wind_speed = ''
 
         try:
-            # urllib.socket.setdefaulttimeout(8)
-            # usock = urllib.urlopen(self.weather_url)
-            tree = ElementTree.parse(self.weather_url)
-            # usock.close()
+            urllib.socket.setdefaulttimeout(8)
+            usock = urllib.urlopen(self.weather_url)
+            tree = ElementTree.parse(usock)
+            usock.close()
+        
+            self.xml_root = tree.getroot()
+            self.fact_city = self.xml_root.find('location/name').text
+            for time in self.xml_root.iter('time'):
+                self.fact_temperature = time[4].get('value')
+                self.fact_condition = self._convert_condition_en2ru(time[0].get('name'))
+                self.fact_wind_direction = self._convert_wind_en2ru(time[2].get('code'))
+                self.fact_wind_speed = int(float(time[3].get('mps')))
+                break
         except:
-            print 'ERROR - Current Conditions - Could not get information from server...'
-            sys.exit(2)
-
-        self.xml_root = tree.getroot()
-        self.fact_city = self.xml_root.find('location/name').text
-        for time in self.xml_root.iter('time'):
-            self.fact_temperature = time[4].get('value')
-            self.fact_condition = self._convert_condition_en2ru(time[0].get('name'))
-            self.fact_wind_direction = self._convert_wind_en2ru(time[2].get('code'))
-            self.fact_wind_speed = int(float(time[3].get('mps')))
-            break
+            return 
 
     def _convert_wind_en2ru(self, value):
         value = value.lower()
@@ -87,10 +88,7 @@ class yrnoWeather():
         return value
 
     def __unicode__(self):
-        if self.fact_city and self.fact_temperature and self.fact_condition and self.fact_wind_direction and self.fact_wind_speed:
-            return u'%s: %s° C, %s, %s ветер %s м/с' % (self.fact_city, self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
-        else:
-            return u''
+        return u'%s° C, %s, %s ветер %s м/с' % (self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
 
 
 def main(location):

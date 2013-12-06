@@ -9,23 +9,26 @@ class YandexWeather():
     def __init__(self, location):
         self.yandex_ng = '{http://weather.yandex.ru/forecast}%s'
         self.weather_url = 'http://export.yandex.ru/weather-ng/forecasts/%s.xml' % (location)
+        self.fact_temperature = ''
+        self.fact_condition = ''
+        self.fact_wind_direction = ''
+        self.fact_wind_speed = ''
 
         try:
             urllib.socket.setdefaulttimeout(8)
             usock = urllib.urlopen(self.weather_url)
             tree = ElementTree.parse(usock)
             usock.close()
-        except:
-            print 'ERROR - Current Conditions - Could not get information from server...'
-            sys.exit(2)
 
-        self.xml_root = tree.getroot()
-        self.fact_city = self.xml_root.get('city')
-        for fact in self.xml_root.iter(self.yandex_ng % 'fact'):
-            self.fact_temperature = fact.find(self.yandex_ng % 'temperature').text
-            self.fact_condition = fact.find(self.yandex_ng % 'weather_type').text
-            self.fact_wind_direction = self._convert_wind_en2ru(fact.find(self.yandex_ng % 'wind_direction').text)
-            self.fact_wind_speed = fact.find(self.yandex_ng % 'wind_speed').text
+            self.xml_root = tree.getroot()
+            self.fact_city = self.xml_root.get('city')
+            for fact in self.xml_root.iter(self.yandex_ng % 'fact'):
+                self.fact_temperature = fact.find(self.yandex_ng % 'temperature').text
+                self.fact_condition = fact.find(self.yandex_ng % 'weather_type').text
+                self.fact_wind_direction = self._convert_wind_en2ru(fact.find(self.yandex_ng % 'wind_direction').text)
+                self.fact_wind_speed = fact.find(self.yandex_ng % 'wind_speed').text
+        except:
+            return
 
     def get_weather_by_hour(self):
         for day in self.xml_root.iter(self.yandex_ng % 'day'):
