@@ -4,6 +4,7 @@
 import MySQLdb as db
 import logging
 import time
+import datetime
 from bwc_city import BWCCity
 from yandex_weather import YandexWeather
 from yrno_weather import yrnoWeather
@@ -235,8 +236,6 @@ class dbSMSTask(object):
                 id, name, bwc_location_code, weather_location_code,create_date, create_user_id, yrno_location_code
             from
                 sender_mailing
-            where 
-                id > 476
             order by
                 id
         '''
@@ -249,6 +248,78 @@ class dbSMSTask(object):
 
         return self.cursor.fetchall()
 
+    def get_weather_subscribers(self):
+        sql = '''
+            select
+                s.mobnum, w.text, s.id, s.mailing_id
+            from
+                sender_subscriber s, sender_weathertext w
+            where 
+                s.status = 0 -- подписан
+                and w.mailing_id = s.mailing_id
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return []
+        return self.cursor.fetchall()
+
+    def get_mailing_list(self):
+        sql = '''
+            select
+                m.yrno_location_code, mailing_id, count(*)
+            from
+                sender_subscriber s, sender_mailing m
+            where 
+                s.status = 0 -- подписан
+                and s.mailing_id = m.id
+            group by
+                m.yrno_location_code, mailing_id
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return []
+        return self.cursor.fetchall()
+
+    def clear_weather_texts(self):
+        sql = '''
+            delete from sender_weathertext
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+
+    def add_weather_text(self, mailing_id, weather):
+        sql = '''
+            insert into sender_weathertext
+                (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date)
+            values
+                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, %(time_from)s, %(time_to)s, NOW())
+        '''
+        try:
+            self.cursor.execute(sql, {
+                'mailing_id': mailing_id,
+                'text': weather['text'],
+                'temperature': weather['temperature'],
+                'condition': weather['condition'],
+                'wind_direction': weather['wind_direction'],
+                'wind_speed': weather['wind_speed'],
+                'time_from': weather['time_from'],
+                'time_to': weather['time_to'],
+            })
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return -1
+        return self.cursor.lastrowid
+
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
@@ -256,22 +327,36 @@ def main(args=None):
 
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
-    tasks = tasker.get_all_city()
-    for task in tasks:
-        id, name, bwc_location_code, weather_location_code,create_date, create_user_id, yrno_location_code = task
-        yandex = YandexWeather(weather_location_code)
-        yrno = yrnoWeather(yrno_location_code)
-        temp1 = ''
-        if yandex.fact_temperature:
-            temp1 = yandex.fact_temperature
-        temp2 = ''
-        if yrno.fact_temperature:
-            temp2 = yrno.fact_temperature
-        print '%s|%s|%s' % (name.encode('utf8'), temp1.encode('utf8'), temp2.encode('utf8'))
-        time.sleep(4)
-        
-    # tasker.get_current_weather('79021702030')
-    # tasker.load_today_weather()
+
+    # clean and get new weather
+    tasker.clear_weather_texts()
+    mailings = tasker.get_mailing_list()
+    weather = yrnoWeather()
+    for mailing in mailings:
+        yrno_location, mailing_id, cnt = mailing
+        temperature = ''
+        today = None
+        for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
+            if i == 2:
+                today = item
+            if i == 6:
+                if today['temperature'] != item['temperature']:
+                    today['text'] = u'%s° %s°C, %s, %s ветер %s м/с' % (today['temperature'], item['temperature'], today['condition'], today['wind_direction'], today['wind_speed'])
+                else:
+                    today['text'] = u'%s° C, %s, %s ветер %s м/с' % (today['temperature'], today['condition'], today['wind_direction'], today['wind_speed'])
+
+        tuple_time = time.strptime(today['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+        today['time_from'] = datetime.datetime(*tuple_time[:6])
+        tuple_time = time.strptime(today['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+        today['time_to'] = datetime.datetime(*tuple_time[:6])
+        tasker.add_weather_text(mailing_id, today)
+
+        subscribers = tasker.get_weather_subscribers()
+        for subscriber in subscribers:
+            mobnum, text, sid, mailing_id = subscriber
+            tasker.add_new_task(mobnum, 'subs', text, 0)
+
+
 
 if __name__ == '__main__':
     main()

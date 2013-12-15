@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from sender.models import Mailing, Subscriber, SMSTask
+from sender.models import Mailing, Subscriber, SMSTask, WeatherText
 from django.forms import CheckboxSelectMultiple
 from django.db import models
 
@@ -43,6 +43,14 @@ class SMSTaskAdmin(admin.ModelAdmin):
         model = SMSTask
 
 
+class WeatherTextAdmin(admin.ModelAdmin):
+    list_display = ('mailing', 'create_date', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
+    list_filter = ('time_from', 'time_to', 'create_date',)
+    class Meta:
+        model = WeatherText
+
+
 admin.site.register(Mailing, MailingAdmin)
 admin.site.register(Subscriber, SubscriberAdmin)
 admin.site.register(SMSTask, SMSTaskAdmin)
+admin.site.register(WeatherText, WeatherTextAdmin)

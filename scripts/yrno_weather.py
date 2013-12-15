@@ -6,12 +6,14 @@ from xml.etree import ElementTree
 
 
 class yrnoWeather():
-    def __init__(self, location):
+    def __init__(self, location=None):
         self.weather_url = 'http://www.yr.no/place/%s/forecast.xml' % (location)
         self.fact_temperature = ''
         self.fact_condition = ''
         self.fact_wind_direction = ''
         self.fact_wind_speed = ''
+        if not location:
+            return
 
         try:
             urllib.socket.setdefaulttimeout(8)
@@ -29,6 +31,33 @@ class yrnoWeather():
                 break
         except:
             return 
+
+    def get_weather_by_hour(self, location):
+        self.weather_url = 'http://www.yr.no/place/%s/forecast_hour_by_hour.xml' % (location)
+        try:
+            urllib.socket.setdefaulttimeout(8)
+            usock = urllib.urlopen(self.weather_url)
+            tree = ElementTree.parse(usock)
+            usock.close()
+        
+            self.xml_root = tree.getroot()
+            city = self.xml_root.find('location/name').text
+            for time in self.xml_root.iter('time'):
+                temperature = time[4].get('value')
+                condition = self._convert_condition_en2ru(time[0].get('name'))
+                wind_direction = self._convert_wind_en2ru(time[2].get('code'))
+                wind_speed = int(float(time[3].get('mps')))
+                yield {
+                    'city': city,
+                    'time_from': time.get('from'),
+                    'time_to': time.get('to'),
+                    'temperature': temperature, 
+                    'condition': condition, 
+                    'wind_direction': wind_direction, 
+                    'wind_speed': wind_speed,
+                }
+        except:
+            return
 
     def _convert_wind_en2ru(self, value):
         value = value.lower()
@@ -62,7 +91,8 @@ class yrnoWeather():
     def _convert_condition_en2ru(self, value):
         value = value.lower()
         dict_enru_wind_direction = {
-            'sun/clear sky' :   u'солнечно',
+            'sun'           :   u'солнечно',
+            'clear sky'     :   u'солнечно',
             'partly cloudy' :   u'переменная облачность',
             'fair'          :   u'ясно',
             'snow'          :   u'снег',
@@ -88,12 +118,15 @@ class yrnoWeather():
         return value
 
     def __unicode__(self):
-        return u'%s° C, %s, %s ветер %s м/с' % (self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
+        if self.fact_temperature != '' and self.fact_condition != '' and self.fact_wind_direction != '' and self.fact_wind_speed != '':
+            return u'%s° C, %s, %s ветер %s м/с' % (self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
 
 
 def main(location):
     weather = yrnoWeather(location)
     print unicode(weather)
+    for item in weather.get_weather_by_hour(location):
+        print item['wind_direction'].encode('utf-8')
 
 if __name__ == "__main__":
     sys.exit(main('Russia/Irkutsk/Irkutsk'))

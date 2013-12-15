@@ -90,8 +90,8 @@ class YandexWeather():
         return value
 
     def __unicode__(self):
-        if self.fact_city and self.fact_temperature and self.fact_condition and self.fact_wind_direction and self.fact_wind_speed:
-            return u'%s: %s° C, %s, %s ветер %s м/с' % (self.fact_city, self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
+        if self.fact_temperature != '' and self.fact_condition != '' and self.fact_wind_direction != '' and self.fact_wind_spee != '':
+            return u'%s° C, %s, %s ветер %s м/с' % (self.fact_temperature, self.fact_condition, self.fact_wind_direction, self.fact_wind_speed)
         else:
             return u''
 

@@ -73,3 +73,22 @@ class SMSTask(models.Model):
         verbose_name = _(u'Очередь сообщений')
         verbose_name_plural = _(u'Очередь сообщений')
 
+# Тексты
+class WeatherText(models.Model):
+    mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
+    create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
+    text = models.CharField(_(u'Погода'), max_length=1000) 
+    temperature = models.CharField(_(u'Температура'), max_length=500) 
+    wcondition = models.CharField(_(u'Условия'), max_length=500) 
+    wind_direction = models.CharField(_(u'Направление ветра'), max_length=500) 
+    wind_speed = models.CharField(_(u'Скорость ветра'), max_length=500)
+    time_from = models.DateTimeField(_(u'Дата от'), null=True, blank=True)
+    time_to = models.DateTimeField(_(u'Дата до'), null=True, blank=True)
+
+    def __unicode__(self):
+        return u'%s° C, %s, %s ветер %s м/с' % (self.temperature, self.wcondition, self.wind_direction, self.wind_speed)
+
+    class Meta:
+        ordering = ['time_from']
+        verbose_name = _(u'Погода')
+        verbose_name_plural = _(u'Погода')
