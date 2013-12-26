@@ -59,6 +59,9 @@ class SMPP(object):
                 # checking
                 if short_message in [u'-pogoda', u'-погода']:
                     self.smstask.unsubscribe(source_addr)
+                    out_text = u'Вы отписаны от ежедневной погоды. Спасибо за использование сервиса.'
+                    task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
+                    self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                 else:
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
@@ -68,10 +71,14 @@ class SMPP(object):
                         self.smstask.subscribe(source_addr, mailing_id)
                         self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     elif mailing_id:
-                        self.send_sms(smpp, source_addr, u'Для Вашего нас. пункта нет погоды.').addBoth(self.message_sent, task_id)
+                        out_text = u'Для Вашего нас. пункта нет погоды.'
+                        task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
+                        self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     else:
-                        self.send_sms(smpp, source_addr, u'Нас. пункт не определен. Отправьте смс с названием на 8181.').addBoth(self.message_sent, task_id)
+                        out_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
+                        task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
+                        self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
 
             elif message_state == MessageState.DELIVERED:

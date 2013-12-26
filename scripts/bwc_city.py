@@ -41,3 +41,4 @@ class BWCCity():
 
 if __name__ == '__main__':
     print BWCCity('79500500600')
+    # print BWCCity('79025669662')
