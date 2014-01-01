@@ -13,7 +13,8 @@ import dbsmstask, pid
 
 class SMPP(object):
     ESME_NUM = '8181'
-    SOURCE_ADDR_TON = AddrTon.ALPHANUMERIC
+    SOURCE_ADDR_TON = AddrTon.UNKNOWN
+    SOURCE_ADDR_NPI = AddrNpi.ISDN
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
     DEST_ADDR_NPI = AddrNpi.ISDN
 
@@ -99,6 +100,7 @@ class SMPP(object):
             destination_addr=source_addr,
             message_payload=short_message,
             source_addr_ton=self.SOURCE_ADDR_TON,
+            source_addr_npi=self.SOURCE_ADDR_NPI,
             dest_addr_ton=self.DEST_ADDR_TON,
             dest_addr_npi=self.DEST_ADDR_NPI,
             esm_class=EsmClass(EsmClassMode.DEFAULT, EsmClassType.DEFAULT),
@@ -127,6 +129,7 @@ class SMPP(object):
         for task in tasks:
             task_id, mobnum, out_text = task
             self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
+            self.smstask.update_task(1, task_id, '', -1)
             d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, task_id)
 

@@ -44,7 +44,7 @@ class SMSTaskAdmin(admin.ModelAdmin):
 
 
 class WeatherTextAdmin(admin.ModelAdmin):
-    list_display = ('mailing', 'create_date', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
+    list_display = ('mailing', 'create_date', 'text', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
     list_filter = ('time_from', 'time_to', 'create_date',)
     class Meta:
         model = WeatherText

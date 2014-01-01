@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import MySQLdb as db
+import sys
 import logging
 import time
 import datetime
@@ -34,7 +35,7 @@ class dbSMSTask(object):
             )
             self.cursor = self.connection.cursor()
             self.cursor.execute('SET SESSION query_cache_type = OFF')
-            # self.cursor.execute('SET TIME_ZONE = "+00:00"')
+            self.cursor.execute('SET TIME_ZONE = "+00:00"')
             self.connection_state = 1
         except db.Error, e:
             self.raise_error(e)
@@ -80,12 +81,15 @@ class dbSMSTask(object):
 
     def get_current_weather(self, mobnum):
         sql = '''
-            select
-                weather_location_code, yrno_location_code, name
-            from
-                sender_mailing
-            where
-                id = %(mailing_id)s
+            select 
+                m.name, w.text
+            from 
+                sender_weathertext w, sender_mailing m
+            where 
+                m.id = %(mailing_id)s
+                and mailing_id = m.id
+                and now() between time_from and time_to
+            limit 1
         '''
         try:
             mailing_id = self.get_mailing_id(mobnum)
@@ -98,9 +102,9 @@ class dbSMSTask(object):
                     row = self.cursor.fetchone()
                     self.connection.commit()
                     if row:
-                        location, yrno_location, name = row
+                        name, weather = row
                         # weather = unicode(YandexWeather(location))
-                        weather = unicode(yrnoWeather(yrno_location))
+                        # weather = unicode(yrnoWeather(yrno_location))
                         if weather:
                             self.weather[mailing_id] = (u'%s: %s' % (name, weather), time.time())
                     return mailing_id, self.weather.get(mailing_id, (None, None))[0]
@@ -251,15 +255,19 @@ class dbSMSTask(object):
     def get_weather_subscribers(self):
         sql = '''
             select
-                s.mobnum, w.text, s.id, s.mailing_id
+                s.mobnum, w.text, s.id, s.mailing_id, w1.temperature, m.name
             from
-                sender_subscriber s, sender_weathertext w
+                sender_subscriber s, sender_weathertext w, sender_weathertext w1, sender_mailing m
             where 
                 s.status = 0 -- подписан
+                and m.id = s.mailing_id
                 and w.mailing_id = s.mailing_id
+                and DATE_ADD(NOW(), INTERVAL 7 HOUR) between w.time_from and w.time_to
+                and w1.mailing_id = s.mailing_id
+                and DATE_ADD(NOW(), INTERVAL 4 HOUR) between w1.time_from and w1.time_to
         '''
         try:
-            self.cursor.execute(sql, {})
+            self.cursor.execute(sql, { })
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
@@ -269,14 +277,11 @@ class dbSMSTask(object):
     def get_mailing_list(self):
         sql = '''
             select
-                m.yrno_location_code, mailing_id, count(*)
+                m.yrno_location_code, m.id
             from
-                sender_subscriber s, sender_mailing m
+                sender_mailing m
             where 
-                s.status = 0 -- подписан
-                and s.mailing_id = m.id
-            group by
-                m.yrno_location_code, mailing_id
+                m.yrno_location_code is not null
         '''
         try:
             self.cursor.execute(sql, {})
@@ -301,7 +306,7 @@ class dbSMSTask(object):
             insert into sender_weathertext
                 (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date)
             values
-                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, %(time_from)s, %(time_to)s, NOW())
+                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00'), NOW())
         '''
         try:
             self.cursor.execute(sql, {
@@ -328,35 +333,45 @@ def main(args=None):
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
-    # clean and get new weather
-    tasker.clear_weather_texts()
+    # tasker.clear_weather_texts()
     mailings = tasker.get_mailing_list()
     weather = yrnoWeather()
     for mailing in mailings:
-        yrno_location, mailing_id, cnt = mailing
-        temperature = ''
-        today = None
+        yrno_location, mailing_id = mailing
+        time_from = None
         for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
-            if i == 2:
-                today = item
-            if i == 6:
-                if today['temperature'] != item['temperature']:
-                    today['text'] = u'%s° %s°C, %s, %s ветер %s м/с' % (today['temperature'], item['temperature'], today['condition'], today['wind_direction'], today['wind_speed'])
-                else:
-                    today['text'] = u'%s° C, %s, %s ветер %s м/с' % (today['temperature'], today['condition'], today['wind_direction'], today['wind_speed'])
+            # init time_from
+            if i == 0:
+                time_from = item['time_from'].replace("-", "")[0:8]
 
-        tuple_time = time.strptime(today['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
-        today['time_from'] = datetime.datetime(*tuple_time[:6])
-        tuple_time = time.strptime(today['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
-        today['time_to'] = datetime.datetime(*tuple_time[:6])
-        tasker.add_weather_text(mailing_id, today)
+            # только одни сутки
+            if item['time_from'].replace("-", "")[0:8] != time_from:
+                break
 
-        subscribers = tasker.get_weather_subscribers()
-        for subscriber in subscribers:
-            mobnum, text, sid, mailing_id = subscriber
-            tasker.add_new_task(mobnum, 'subs', text, 0)
+            tuple_time = time.strptime(item['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+            item['time_from'] = datetime.datetime(*tuple_time[:6])
+            tuple_time = time.strptime(item['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+            item['time_to'] = datetime.datetime(*tuple_time[:6])
+            item['text'] = u'%s° C, %s, %s ветер %s м/с' % (item['temperature'], item['condition'], item['wind_direction'], item['wind_speed'])
+            tasker.add_weather_text(mailing_id, item)
 
+def subs():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
+    tasker = dbSMSTask(db_config, logger)
+
+    # создаем рассылку
+    subscribers = tasker.get_weather_subscribers()
+    for subscriber in subscribers:
+        mobnum, weather, sid, mailing_id, temperature, name = subscriber
+        text = u'%s: %s' % (name, weather.replace(u"°", u" "+temperature+u"°"))
+        tasker.add_new_task(mobnum, 'subs', text, 0)
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        subs()
+    else:
+        main()

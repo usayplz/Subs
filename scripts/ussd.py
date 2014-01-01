@@ -28,6 +28,8 @@ class SMPP(object):
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
+            self.lc_refresh_dbconnect = task.LoopingCall(self.refresh_dbconnect)
+            self.lc_refresh_dbconnect.start(180)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
@@ -89,6 +91,10 @@ class SMPP(object):
             ussd_service_op=ussd_service_op,
         )
         return smpp.sendDataRequest(submit_pdu)
+
+    def refresh_dbconnect(self):
+        tasks = self.smstask.check_tasks()
+
 
 def critical(msg, *args, **kwargs):
     logger.error(msg)
