@@ -294,7 +294,7 @@ class dbSMSTask(object):
 
     def clear_weather_texts(self):
         sql = '''
-            delete from sender_weathertext
+            delete from sender_weathertext where create_date < date_sub(NOW(), interval 7 day)
         '''
         try:
             self.cursor.execute(sql, {})
@@ -334,7 +334,7 @@ def main(args=None):
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
-    # tasker.clear_weather_texts()
+    tasker.clear_weather_texts()
     mailings = tasker.get_mailing_list()
     weather = yrnoWeather()
     for mailing in mailings:
