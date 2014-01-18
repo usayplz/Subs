@@ -17,7 +17,7 @@ class BWCCity():
         query_id = self.put_bwc_geotarget(mobnum)
         timer = time.time()
         bwc_str = u''
-        while ('city_id' not in bwc_str or time.time()-timer > self.TIMEOUT):
+        while ('city_id' not in bwc_str and time.time()-timer < self.TIMEOUT):
             bwc_str = self.get_bwc_geotarget(query_id)
         self.bwc_code_id = re.findall(r'city_id=(\d+)', bwc_str)
 

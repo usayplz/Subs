@@ -129,7 +129,7 @@ class SMPP(object):
         for task in tasks:
             task_id, mobnum, out_text = task
             self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
-            self.smstask.update_task(1, task_id, '', -1)
+            self.smstask.update_task(-1, task_id, '', -1)
             d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, task_id)
 
