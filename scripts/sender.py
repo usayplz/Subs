@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, logging, datetime
+import os, logging, datetime, time
 from twisted.internet import reactor, defer, task
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
 from smpp.twisted.config import SMPPClientConfig
@@ -23,13 +23,14 @@ class SMPP(object):
         self.db_config = db_config
         self.logger = logger
         self.smstask = dbsmstask.dbSMSTask(db_config, logger)
+        #self.send_all_runnning = 0
 
     @defer.inlineCallbacks
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(60)
+            self.lc_send_all.start(10)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
@@ -58,7 +59,7 @@ class SMPP(object):
                     short_message = unicode(short_message, 'latin_1')
 
                 # checking
-                if short_message in [u'-pogoda', u'-погода']:
+                if short_message.lower() in [u'-pogoda', u'-погода', u'stop', u'стоп', u'off']:
                     self.smstask.unsubscribe(source_addr)
                     out_text = u'Вы отписаны от ежедневной погоды. Спасибо за использование сервиса.'
                     task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
@@ -125,14 +126,25 @@ class SMPP(object):
             self.logger.info(instance)
 
     def send_all(self):
+#        if self.send_all_runnning == 1:
+#            return
+#        else:
+#            self.send_all_runnning = 1
+#        try:
         tasks = self.smstask.check_tasks()
         for task in tasks:
             task_id, mobnum, out_text = task
             self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
             self.smstask.update_task(-1, task_id, '', -1)
+#            time.sleep(0.3)
             d = self.send_sms(self.smpp, mobnum, out_text)
             d.addBoth(self.message_sent, task_id)
-
+#        except Exception, e:
+#            self.logger.critical(e)
+#            raise
+#            return
+#        finally:
+#            self.send_all_runnning = 0
 
 def critical(msg, *args, **kwargs):
     logger.error(msg)

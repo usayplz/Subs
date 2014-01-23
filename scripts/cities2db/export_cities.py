@@ -35,17 +35,23 @@ def insert(code, name):
         return -1
 
 filename = 'list_cities.csv'
+filename = 'rass.txt'
 f = codecs.open(filename, "r", 'utf-8')
 pre_point = u''
 for line in f:
-    line = line.strip()
-    m = re.match(ur'(\w+),(("[А-Яа-я ,-\.]+\s([А-Яа-я-ё]+)")|("[А-Яа-я ,-\.]+\.([А-Яа-я-ё]+)")|([А-Яа-я-ё]+)),', line, re.U)
-    if m:
-        if m.groups()[3] is None:
-            point = m.groups()[1].encode('utf-8')
-        else:
-            point = m.groups()[3].encode('utf-8')
-        print m.groups()[0].encode('utf-8'), point
-        if pre_point != point:
-            insert(m.groups()[0].encode('utf-8'), point)
-        pre_point = point
+    line = line.rstrip()
+    if len(line) > 9:
+        print line
+        cursor.execute("update sender_smstask set status=0 where mobnum = %(phone)s and in_text = 'subs'  and delivery_date > date_sub(NOW(), interval 1 day)", {'phone': line})
+        connection.commit()
+#    line = line.strip()
+#    m = re.match(ur'(\w+),(("[А-Яа-я ,-\.]+\s([А-Яа-я-ё]+)")|("[А-Яа-я ,-\.]+\.([А-Яа-я-ё]+)")|([А-Яа-я-ё]+)),', line, re.U)
+#    if m:
+#        if m.groups()[3] is None:
+#            point = m.groups()[1].encode('utf-8')
+#        else:
+#            point = m.groups()[3].encode('utf-8')
+#        print m.groups()[0].encode('utf-8'), point
+#        if pre_point != point:
+#            insert(m.groups()[0].encode('utf-8'), point)
+#        pre_point = point

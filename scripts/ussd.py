@@ -75,7 +75,7 @@ class SMPP(object):
                         self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
                         task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
 
-    def send_ussd(self, smpp, my_num, source_addr, short_message, ussd_service_op):
+    def send_ussd(self, smpp, my_num, source_addr, short_message, _ussd_service_op):
         short_message = short_message.encode('utf_16_be')
 
         submit_pdu = SubmitSM(
@@ -89,7 +89,7 @@ class SMPP(object):
             dest_addr_npi=self.DEST_ADDR_NPI,
             esm_class=EsmClass(EsmClassMode.DEFAULT, EsmClassType.DEFAULT),
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2), #SMS_DEFAULT_ALPHABET),
-            ussd_service_op=ussd_service_op,
+            ussd_service_op=_ussd_service_op,
         )
         return smpp.sendDataRequest(submit_pdu)
 

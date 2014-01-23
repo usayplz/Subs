@@ -39,6 +39,7 @@ class SubscriberAdmin(admin.ModelAdmin):
 class SMSTaskAdmin(admin.ModelAdmin):
     list_display = ('delivery_date', 'mobnum', 'status', 'in_text', 'out_text', 'sent_date',)
     list_filter = ('status', 'delivery_date',)
+    list_per_page = 1000
     class Meta:
         model = SMSTask
 
@@ -46,6 +47,7 @@ class SMSTaskAdmin(admin.ModelAdmin):
 class WeatherTextAdmin(admin.ModelAdmin):
     list_display = ('mailing', 'create_date', 'text', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
     list_filter = ('time_from', 'time_to', 'create_date',)
+    list_per_page = 1000
     class Meta:
         model = WeatherText
 
