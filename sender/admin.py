@@ -16,6 +16,7 @@ class MailingAdmin(admin.ModelAdmin):
     exclude = ('create_user',)
     list_display = ('name', 'bwc_location_code', 'weather_location_code', yarno_url, 'create_date', 'create_user',)
     list_filter = ('create_user',)
+    search_fields = ['name', 'bwc_location_code', 'weather_location_code']
     list_per_page = 1000
     formfield_overrides = {
         models.ManyToManyField: {'widget': CheckboxSelectMultiple},
@@ -31,7 +32,8 @@ class MailingAdmin(admin.ModelAdmin):
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date',)
-    list_filter = ('mailing', 'status', 'create_date',)
+    list_filter = ('status', 'create_date',)
+    search_fields = ['mobnum']
     class Meta:
         model = Subscriber
 
@@ -39,6 +41,7 @@ class SubscriberAdmin(admin.ModelAdmin):
 class SMSTaskAdmin(admin.ModelAdmin):
     list_display = ('delivery_date', 'mobnum', 'status', 'in_text', 'out_text', 'sent_date',)
     list_filter = ('status', 'delivery_date',)
+    search_fields = ['mobnum', 'in_text', 'out_text']
     list_per_page = 1000
     class Meta:
         model = SMSTask
@@ -47,6 +50,7 @@ class SMSTaskAdmin(admin.ModelAdmin):
 class WeatherTextAdmin(admin.ModelAdmin):
     list_display = ('mailing', 'create_date', 'text', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
     list_filter = ('time_from', 'time_to', 'create_date',)
+    search_fields = ['text']
     list_per_page = 1000
     class Meta:
         model = WeatherText
