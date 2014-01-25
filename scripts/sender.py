@@ -59,7 +59,7 @@ class SMPP(object):
                     short_message = unicode(short_message, 'latin_1')
 
                 # checking
-                if short_message.lower() in [u'-pogoda', u'-погода', u'stop', u'стоп', u'off']:
+                if short_message.lower().split(' ')[0] in [u'-pogoda', u'-погода', u'stop', u'стоп', u'off']:
                     self.smstask.unsubscribe(source_addr)
                     out_text = u'Вы отписаны от ежедневной погоды. Спасибо за использование сервиса.'
                     task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
