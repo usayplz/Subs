@@ -5,7 +5,7 @@
     <h2>Weather</h2>
     <p>
     {% for weather in current_weather %}
-        {{ weather }}<br>
+        {{ weather.mailing }}: {{ weather }}<br>
     {% endfor %}
     </p>
 <!--     <p>Данные погоды предоставляются сервисом <a href="http://pogoda.yandex.ru/">Яндекс.Погода</a></p> -->
