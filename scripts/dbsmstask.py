@@ -305,6 +305,18 @@ class dbSMSTask(object):
 
     def add_weather_text(self, mailing_id, weather):
         sql = '''
+            select count(*) from sender_weathertext where time_from = CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00')
+        '''
+        try:
+            self.cursor.execute(sql, { 'time_from': weather['time_from'], })
+        except db.Error, e:
+            self.raise_error(e)
+ 
+        row = self.cursor.fetchone()
+        if int(row[0]) > 0:
+            return -1
+
+        sql = '''
             insert into sender_weathertext
                 (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date, pressure)
             values
@@ -341,22 +353,14 @@ def main(args=None):
     weather = yrnoWeather()
     for mailing in mailings:
         yrno_location, mailing_id = mailing
-        time_from = None
         for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
-            # init time_from
-            if i == 0:
-                time_from = item['time_from'].replace("-", "")[0:8]
-
-            # только одни сутки
-            if item['time_from'].replace("-", "")[0:8] != time_from:
-                break
-
             tuple_time = time.strptime(item['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
             item['time_from'] = datetime.datetime(*tuple_time[:6])
             tuple_time = time.strptime(item['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
             item['time_to'] = datetime.datetime(*tuple_time[:6])
             item['text'] = u'%s° C, %s, %s ветер %s м/с' % (item['temperature'], item['condition'], item['wind_direction'], item['wind_speed'])
             tasker.add_weather_text(mailing_id, item)
+
 
 def subs():
     logging.basicConfig(level=logging.DEBUG)
