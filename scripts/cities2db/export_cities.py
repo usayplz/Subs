@@ -4,6 +4,10 @@
 import re, codecs
 import MySQLdb as db
 
+p = u'1025.6'
+p = float(p)/1.333
+print p
+exit()
 
 db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
 connection = db.connect(

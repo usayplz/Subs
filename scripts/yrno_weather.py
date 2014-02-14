@@ -12,6 +12,7 @@ class yrnoWeather():
         self.fact_condition = ''
         self.fact_wind_direction = ''
         self.fact_wind_speed = ''
+        self.fact_pressure = ''
         if not location:
             return
 
@@ -28,6 +29,7 @@ class yrnoWeather():
                 self.fact_condition = self._convert_condition_en2ru(time[0].get('name'))
                 self.fact_wind_direction = self._convert_wind_en2ru(time[2].get('code'))
                 self.fact_wind_speed = int(float(time[3].get('mps')))
+                self.fact_pressure = int(float(time[5].get('value'))/1.333)
                 break
         except:
             return 
@@ -47,6 +49,7 @@ class yrnoWeather():
                 condition = self._convert_condition_en2ru(time[0].get('name'))
                 wind_direction = self._convert_wind_en2ru(time[2].get('code'))
                 wind_speed = int(float(time[3].get('mps')))
+                pressure = int(float(time[5].get('value'))/1.333)
                 yield {
                     'city': city,
                     'time_from': time.get('from'),
@@ -55,6 +58,7 @@ class yrnoWeather():
                     'condition': condition, 
                     'wind_direction': wind_direction, 
                     'wind_speed': wind_speed,
+                    'pressure': pressure
                 }
         except:
             return
@@ -126,7 +130,7 @@ def main(location):
     weather = yrnoWeather(location)
     print unicode(weather)
     for item in weather.get_weather_by_hour(location):
-        print item['wind_direction'].encode('utf-8')
+        print item['pressure']
 
 if __name__ == "__main__":
     sys.exit(main('Russia/Irkutsk/Irkutsk'))

@@ -48,7 +48,7 @@ class SMSTaskAdmin(admin.ModelAdmin):
 
 
 class WeatherTextAdmin(admin.ModelAdmin):
-    list_display = ('mailing', 'create_date', 'text', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'time_from', 'time_to', )
+    list_display = ('mailing', 'create_date', 'text', 'temperature', 'wcondition', 'wind_direction', 'wind_speed', 'pressure', 'time_from', 'time_to', )
     list_filter = ('time_from', 'time_to', 'create_date',)
     search_fields = ['text']
     list_per_page = 1000

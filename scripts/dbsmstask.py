@@ -306,9 +306,9 @@ class dbSMSTask(object):
     def add_weather_text(self, mailing_id, weather):
         sql = '''
             insert into sender_weathertext
-                (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date)
+                (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date, pressure)
             values
-                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00'), NOW())
+                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00'), NOW(), %(pressure)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -320,6 +320,7 @@ class dbSMSTask(object):
                 'wind_speed': weather['wind_speed'],
                 'time_from': weather['time_from'],
                 'time_to': weather['time_to'],
+                'pressure': weather['pressure'],
             })
             self.connection.commit()
         except db.Error, e:

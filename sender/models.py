@@ -82,6 +82,7 @@ class WeatherText(models.Model):
     wcondition = models.CharField(_(u'Условия'), max_length=500) 
     wind_direction = models.CharField(_(u'Направление ветра'), max_length=500) 
     wind_speed = models.CharField(_(u'Скорость ветра'), max_length=500)
+    pressure = models.CharField(_(u'Давление'), max_length=100, null=True, blank=True)
     time_from = models.DateTimeField(_(u'Дата от'), null=True, blank=True)
     time_to = models.DateTimeField(_(u'Дата до'), null=True, blank=True)
 
