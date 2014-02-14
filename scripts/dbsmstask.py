@@ -40,12 +40,12 @@ class dbSMSTask(object):
         except db.Error, e:
             self.raise_error(e)
 
-    def add_new_task(self, mobnum, in_text, out_text, status):
+    def add_new_task(self, mobnum, in_text, out_text, status, delivery_date=None):
         sql = '''
             insert into sender_smstask
                 (mobnum, in_text, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(in_text)s, %(out_text)s, NOW(), %(status)s)
+                (%(mobnum)s, %(in_text)s, %(out_text)s, ifnull(%(delivery_date)s, NOW()), %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -53,6 +53,7 @@ class dbSMSTask(object):
                 'in_text': in_text,
                 'out_text': out_text,
                 'status': status,
+                'delivery_date': delivery_date,
             })
             self.connection.commit()
         except db.Error, e:
@@ -88,7 +89,7 @@ class dbSMSTask(object):
             where 
                 m.id = %(mailing_id)s
                 and mailing_id = m.id
-                and now() between time_from and time_to
+                and NOW() between time_from and time_to
             limit 1
         '''
         try:
