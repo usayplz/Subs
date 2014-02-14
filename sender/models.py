@@ -36,6 +36,7 @@ class Subscriber(models.Model):
     mailing = models.ForeignKey(Mailing, verbose_name=_(u'Рассылка'))
     status = models.SmallIntegerField(_(u'Статус'), choices=SUBS_STATUSES, default=0)
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
+    subs_time = models.TimeField(_(u'Время отправки'), null=True, blank=True)
 
     def __unicode__(self):
         return self.mobnum

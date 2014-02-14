@@ -31,7 +31,7 @@ class MailingAdmin(admin.ModelAdmin):
 
 
 class SubscriberAdmin(admin.ModelAdmin):
-    list_display = ('mobnum', 'mailing', 'status', 'create_date',)
+    list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', )
     list_filter = ('status', 'create_date',)
     search_fields = ['mobnum']
     class Meta:
