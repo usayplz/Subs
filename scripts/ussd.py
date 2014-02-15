@@ -72,7 +72,8 @@ class SMPP(object):
                     task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
                     if weather != '':
                         self.smstask.subscribe(source_addr, mailing_id)
-                if weather != '':
+                    return
+                elif weather != '':
                     self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
                     task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
                     self.smstask.subscribe(source_addr, mailing_id)
