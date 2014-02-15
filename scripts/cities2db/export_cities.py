@@ -6,26 +6,34 @@ import MySQLdb as db
 
 s = u'*8181*1000#'
 s = u'*818*1234#'
-s = u'*8181*12:2#'
+s = u'*8181*1300#'
 #s = u'*8181*1000#'
 #s = u'*8181*1000#'
 s = re.sub("^(\*8181|\*818)", "", s)
 s = re.sub("[^\d]", "", s)
 try:
-    h = int(s[0:2])
-    m = int(s[2:4])
+    if len(s) == 4:
+        h = int(s[0:2])
+        m = int(s[2:4])
+    elif len(s) == 3:
+        h = int(s[0:1])
+        m = int(s[1:3])
+    else:
+        h = None
+        m = None
 except:
     h = None
     m = None
     print "false None"
 
 subs_time = ""
-if (h > 0 and h < 24 and m > 0 and m < 60):
+if (h >= 0 and h < 24 and m >= 0 and m < 60):
     subs_time = "%s:%s:00" % (str(h).zfill(2), str(m).zfill(2))
 else:
     print "false", subs_time
 
-print s, h, m
+print s, h, m, subs_time
+exit()
 
 db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
 connection = db.connect(

@@ -56,24 +56,25 @@ class SMPP(object):
                     my_num = dest_addr
 
                 self.logger.info('current my_num = %s' % my_num)
+                (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
 
                 # set time
-                set_time_result = ""
                 if len(short_message) > 8:
                     set_time_result = self.smstask.set_time(source_addr, short_message)
-
-                # if my_num in '*818#' or my_num in '*8181#':
-                (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
-                self.logger.info('mailing_id = %s' % mailing_id)
-                if set_time_result != '':
-                    sms_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
+                    if set_time_result != '':
+                        sms_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
+                    else:
+                        sms_text = u'Неверный формат времени. Пример установки на 19:30 - *818*1930#'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('Set time (mobnum, text): %s, %s' % (source_addr, text))
                     task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
                     if weather != '':
                         self.smstask.subscribe(source_addr, mailing_id)
                     return
-                elif weather != '':
+                
+                # if my_num in '*818#' or my_num in '*8181#':
+                self.logger.info('mailing_id = %s' % mailing_id)
+                if weather != '':
                     self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
                     task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
                     self.smstask.subscribe(source_addr, mailing_id)

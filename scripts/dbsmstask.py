@@ -83,9 +83,17 @@ class dbSMSTask(object):
     def set_time(self, mobnum, short_message):
         subs_time = re.sub("^(\*8181|\*818)", "", short_message)
         subs_time = re.sub("[^\d]", "", subs_time)
+        h = None
+        m = None
         try:
-            h = int(subs_time[0:2])
-            m = int(subs_time[2:4])
+            if len(subs_time) == 4:
+                h = int(subs_time[0:2])
+                m = int(subs_time[2:4])
+            elif len(subs_time) == 3:
+                h = int(subs_time[0:1])
+                m = int(subs_time[1:3])
+            else:
+                return ""
         except:
             return ""
 
