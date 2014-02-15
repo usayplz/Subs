@@ -4,10 +4,28 @@
 import re, codecs
 import MySQLdb as db
 
-p = u'1025.6'
-p = float(p)/1.333
-print p
-exit()
+s = u'*8181*1000#'
+s = u'*818*1234#'
+s = u'*8181*12:2#'
+#s = u'*8181*1000#'
+#s = u'*8181*1000#'
+s = re.sub("^(\*8181|\*818)", "", s)
+s = re.sub("[^\d]", "", s)
+try:
+    h = int(s[0:2])
+    m = int(s[2:4])
+except:
+    h = None
+    m = None
+    print "false None"
+
+subs_time = ""
+if (h > 0 and h < 24 and m > 0 and m < 60):
+    subs_time = "%s:%s:00" % (str(h).zfill(2), str(m).zfill(2))
+else:
+    print "false", subs_time
+
+print s, h, m
 
 db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
 connection = db.connect(
@@ -20,6 +38,23 @@ connection = db.connect(
 cursor = connection.cursor()
 cursor.execute('SET SESSION query_cache_type = OFF')
 
+sql = '''
+    update
+        sender_subscriber
+    set
+        subs_time = %(subs_time)s
+    where
+        mobnum = '79021702030'
+'''
+try:
+    cursor.execute(sql, {
+        'subs_time': subs_time,
+    })
+    connection.commit()
+except db.Error, e:
+    print "false DB"
+
+exit()
 
 def insert(code, name):
     sql = '''

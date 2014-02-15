@@ -56,24 +56,29 @@ class SMPP(object):
                     my_num = dest_addr
 
                 self.logger.info('current my_num = %s' % my_num)
-                if my_num in '*818#' or my_num in '*8181#':
-                    (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
-                    self.logger.info('mailing_id = %s' % mailing_id)
-                    if weather != '':
-                        self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
-                        task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
-                        self.smstask.subscribe(source_addr, mailing_id)
-                        self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
-                    elif mailing_id:
-                        sms_text = u'Для Вашего нас. пункта нет погоды.'
-                        self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
-                        self.logger.info('ERROR: cannot get weather (mobnum, text): %s, %s' % (source_addr, weather))
-                        task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
-                    else:
-                        sms_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
-                        self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
-                        self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
-                        task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
+
+                # set time
+                if len(short_message) > 8:
+                    set_result = self.smstask.set_time(source_addr, short_message)
+    
+                # if my_num in '*818#' or my_num in '*8181#':
+                (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
+                self.logger.info('mailing_id = %s' % mailing_id)
+                if weather != '':
+                    self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
+                    task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
+                    self.smstask.subscribe(source_addr, mailing_id)
+                    self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                elif mailing_id:
+                    sms_text = u'Для Вашего нас. пункта нет погоды.'
+                    self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
+                    self.logger.info('ERROR: cannot get weather (mobnum, text): %s, %s' % (source_addr, weather))
+                    task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
+                else:
+                    sms_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
+                    self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
+                    self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
+                    task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
 
     def send_ussd(self, smpp, my_num, source_addr, short_message, _ussd_service_op):
         short_message = short_message.encode('utf_16_be')

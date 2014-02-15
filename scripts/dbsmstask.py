@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import MySQLdb as db
-import sys
+import sys, re
 import logging
 import time
 import datetime
@@ -79,6 +79,39 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
+
+    def set_time(self, mobnum, short_message):
+        subs_time = re.sub("^(\*8181|\*818)", "", short_message)
+        subs_time = re.sub("[^\d]", "", subs_time)
+        try:
+            h = int(subs_time[0:2])
+            m = int(subs_time[2:4])
+        except:
+            return ""
+
+        if (h >= 0 and h < 24 and m >= 0 and m < 60):
+            subs_time = "%s:%s:00" % (str(h).zfill(2), str(m).zfill(2))
+        else:
+            return ""
+
+        sql = '''
+            update
+                sender_subscriber
+            set
+                subs_time = %(subs_time)s
+            where
+                mobnum = %(mobnum)s
+        '''
+        try:
+            self.cursor.execute(sql, {
+                'subs_time': subs_time,
+                'mobnum': mobnum,
+            })
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return ""
+        return subs_time
 
     def get_current_weather(self, mobnum):
         sql = '''
@@ -306,10 +339,10 @@ class dbSMSTask(object):
 
     def add_weather_text(self, mailing_id, weather):
         sql = '''
-            select count(*) from sender_weathertext where time_from = CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00')
+            select count(*) from sender_weathertext where time_from = CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00') and mailing_id = %(mailing_id)s
         '''
         try:
-            self.cursor.execute(sql, { 'time_from': weather['time_from'], })
+            self.cursor.execute(sql, { 'time_from': weather['time_from'], 'mailing_id': mailing_id })
         except db.Error, e:
             self.raise_error(e)
  
