@@ -45,7 +45,7 @@ class dbSMSTask(object):
             insert into sender_smstask
                 (mobnum, in_text, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(in_text)s, %(out_text)s, ifnull(%(delivery_date)s, NOW()), %(status)s)
+                (%(mobnum)s, %(in_text)s, %(out_text)s, ifnull(CONVERT_TZ(%(delivery_date)s, @@session.time_zone, '-09:00'), NOW()), %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
