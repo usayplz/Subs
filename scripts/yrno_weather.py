@@ -27,7 +27,7 @@ class yrnoWeather():
             for time in self.xml_root.iter('time'):
                 self.fact_temperature = time[4].get('value')
                 self.fact_condition = self._convert_condition_en2ru(time[0].get('name'))
-                self.fact_wind_direction = self._convert_wind_en2ru(time[2].get('code'))
+                self.fact_wind_direction = self._convert_wind_en2ru_short(time[2].get('code'))
                 self.fact_wind_speed = int(float(time[3].get('mps')))
                 self.fact_pressure = int(float(time[5].get('value'))/1.333)
                 break
@@ -47,7 +47,7 @@ class yrnoWeather():
             for time in self.xml_root.iter('time'):
                 temperature = time[4].get('value')
                 condition = self._convert_condition_en2ru(time[0].get('name'))
-                wind_direction = self._convert_wind_en2ru(time[2].get('code'))
+                wind_direction = self._convert_wind_en2ru_short(time[2].get('code'))
                 wind_speed = int(float(time[3].get('mps')))
                 pressure = int(float(time[5].get('value'))/1.333)
                 yield {
@@ -87,6 +87,35 @@ class yrnoWeather():
             'w'     :   u'западный',
             'wnw'   :   u'северо-западный',
             'wsw'   :   u'юго-западный',
+        }
+        if value in dict_enru_wind_direction:
+            value = dict_enru_wind_direction[value]
+        return value
+
+    def _convert_wind_en2ru_short(self, value):
+        value = value.lower()
+        dict_enru_wind_direction = {
+            'east'  :   u'В',
+            'e'     :   u'В',
+            'ene'   :   u'С-В',
+            'ese'   :   u'Ю-В',
+            'ne'    :   u'С-В',
+            'nne'   :   u'С-В',
+            'nnw'   :   u'С-З',
+            'north' :   u'С',
+            'n'     :   u'С',
+            'nw'    :   u'С-З',
+            'se'    :   u'Ю-В',
+            'south' :   u'Ю',
+            's'     :   u'Ю',
+            'sse'   :   u'Ю-В',
+            'ssw'   :   u'Ю-З',
+            'sw'    :   u'Ю-З',
+            'variable': u'переменный',
+            'west'  :   u'З',
+            'w'     :   u'З',
+            'wnw'   :   u'С-З',
+            'wsw'   :   u'Ю-З',
         }
         if value in dict_enru_wind_direction:
             value = dict_enru_wind_direction[value]
