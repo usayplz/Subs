@@ -36,6 +36,7 @@ class dbSMSTask(object):
             self.cursor = self.connection.cursor()
             self.cursor.execute('SET SESSION query_cache_type = OFF')
             self.cursor.execute('SET TIME_ZONE = "+00:00"')
+            self.cursor.execute('SET lc_time_names = "ru_RU"')
             self.connection_state = 1
         except db.Error, e:
             self.raise_error(e)
@@ -80,11 +81,11 @@ class dbSMSTask(object):
         except db.Error, e:
             self.raise_error(e)
 
-    def set_time(self, mobnum, short_message):
+    def _parse_time_from_message(self, short_message):
         subs_time = re.sub("^(\*8181|\*818)", "", short_message)
         subs_time = re.sub("[^\d]", "", subs_time)
         h = None
-        m = None
+        m = 0
         try:
             if len(subs_time) == 4:
                 h = int(subs_time[0:2])
@@ -92,15 +93,24 @@ class dbSMSTask(object):
             elif len(subs_time) == 3:
                 h = int(subs_time[0:1])
                 m = int(subs_time[1:3])
+            elif len(subs_time) == 2:
+                h = int(subs_time[0:2])
+            elif len(subs_time) == 1:
+                h = int(subs_time[0:1])
             else:
-                return ""
+                return ''
         except:
-            return ""
+            return ''
 
         if (h >= 0 and h < 24 and m >= 0 and m < 60):
-            subs_time = "%s:%s:00" % (str(h).zfill(2), str(m).zfill(2))
+            return "%s:%s:00" % (str(h).zfill(2), str(m).zfill(2))
         else:
-            return ""
+            return ''
+
+    def set_time(self, mobnum, short_message, mailing_id):
+        subs_time = self._parse_time_from_message(short_message)
+        if subs_time == '':
+            return ''
 
         sql = '''
             update
@@ -118,7 +128,22 @@ class dbSMSTask(object):
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
-            return ""
+            return ''
+
+        # если сегодня еще не рассылали
+        h = int("%s%s" % (subs_time[0:2], subs_time[3:5]))
+        h_now = int("%s%s" % (str(datetime.datetime.now())[11:13], str(datetime.datetime.now())[14:16]))
+        self.logger.info("%s < %s" % (h_now, h))
+        if h_now < h:
+            text = u''
+            if h > 1600:
+                text = self.get_evening_weather(mailing_id)
+            else:
+                text = self.get_today_weather(mailing_id)
+            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
+            self.logger.info("%s +++ %s" % (text, send_date))
+            self.add_new_task(mobnum, 'subs', text, 0, send_date)
+
         return subs_time
 
     def get_current_weather(self, mobnum):
@@ -295,6 +320,262 @@ class dbSMSTask(object):
             return []
 
         return self.cursor.fetchall()
+
+    def get_evening_weather(self, mailing_id):
+        sql0 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 47 hour
+        '''
+
+        sql1 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 31 hour
+        '''
+
+        sql3 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 61 hour, '%%e %%b')
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 37 hour between w.time_from and w.time_to
+        '''
+
+        sql4 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 29 hour between w.time_from and w.time_to
+        '''
+
+        try:
+            self.cursor.execute(sql0, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t0, min_t0 = row
+            if max_t0 == min_t0:
+                max_t0 = ''
+
+            self.cursor.execute(sql1, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t1, min_t1 = row
+            if max_t1 == min_t1:
+                max_t1 = ''
+
+            self.cursor.execute(sql3, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name, condition, wind_direction, wind_speed, date = row
+
+            self.cursor.execute(sql4, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name1, condition1, wind_direction1, wind_speed1 = row
+        except db.Error, e:
+            self.raise_error(e)
+            return u''
+        if min_t0 and min_t1 and max_t0 and max_t1:
+            return u'%s. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, condition1)
+        return u''            
+
+    def get_today_weather(self, mailing_id):
+        sql0 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 0 hour and date(NOW())+interval 23 hour
+        '''
+
+        sql1 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 47 hour
+        '''
+
+        sql2 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 31 hour
+        '''
+
+        sql3 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 13 hour between w.time_from and w.time_to
+        '''
+
+        sql4 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 61 hour, '%%e %%b')
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 37 hour between w.time_from and w.time_to
+        '''
+
+        try:
+            self.cursor.execute(sql0, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t0, min_t0 = row
+            if max_t0 == min_t0:
+                max_t0 = ''
+
+            self.cursor.execute(sql1, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t1, min_t1 = row
+            if max_t1 == min_t1:
+                max_t1 = ''
+
+            self.cursor.execute(sql2, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t2, min_t2 = row
+            if max_t2 == min_t2:
+                max_t2 = ''
+
+            self.cursor.execute(sql3, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name, condition, wind_direction, wind_speed = row
+
+            self.cursor.execute(sql4, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name1, condition1, wind_direction1, wind_speed1, date1 = row
+        except db.Error, e:
+            self.raise_error(e)
+            return u''
+        if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
+            return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+        return u''
+
+    def get_tomorrow_weather(self, mailing_id):
+        sql0 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 47 hour
+        '''
+
+        sql1 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 47 hour and date(NOW())+interval 71 hour
+        '''
+
+        sql2 = '''
+            select 
+                max(w.temperature), min(w.temperature)
+            from
+                sender_weathertext w
+            where
+                w.mailing_id = %(mailing_id)s
+                and w.time_from between date(NOW())+interval 47 hour and date(NOW())+interval 55 hour
+        '''
+
+        sql3 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 37 hour between w.time_from and w.time_to
+        '''
+
+        sql4 = '''
+            select 
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 61 hour, '%%e %%b')
+            from
+                sender_weathertext w, sender_mailing m
+            where
+                m.id = %(mailing_id)s
+                and w.mailing_id = m.id
+                and date(NOW())+interval 61 hour between w.time_from and w.time_to
+        '''
+
+        try:
+            self.cursor.execute(sql0, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t0, min_t0 = row
+            if max_t0 == min_t0:
+                max_t0 = ''
+
+            self.cursor.execute(sql1, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t1, min_t1 = row
+            if max_t1 == min_t1:
+                max_t1 = ''
+
+            self.cursor.execute(sql2, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            max_t2, min_t2 = row
+            if max_t2 == min_t2:
+                max_t2 = ''
+
+            self.cursor.execute(sql3, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name, condition, wind_direction, wind_speed = row
+
+            self.cursor.execute(sql4, { 'mailing_id': mailing_id, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            name1, condition1, wind_direction1, wind_speed1, date1 = row
+        except db.Error, e:
+            self.raise_error(e)
+            return u''
+        if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
+            return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+        return u''            
 
     def get_weather_subscribers(self):
         sql = '''

@@ -4,10 +4,22 @@
 import re, codecs
 import MySQLdb as db
 
+import datetime
+subs_time = '17:00:00'
+h = int(subs_time[0:2])
+h_now = int(str(datetime.datetime.now())[11:13])
+if h_now < h:
+    print h_now, h
+else:
+    print "false"
+#exit()
+print int("%s%s" % (subs_time[0:2], subs_time[3:5]))
+exit()
+
 s = u'*8181*1000#'
 s = u'*818*1234#'
 s = u'*8181*1300#'
-#s = u'*8181*1000#'
+s = u'*818*1#'
 #s = u'*8181*1000#'
 s = re.sub("^(\*8181|\*818)", "", s)
 s = re.sub("[^\d]", "", s)
@@ -18,6 +30,15 @@ try:
     elif len(s) == 3:
         h = int(s[0:1])
         m = int(s[1:3])
+    elif len(s) == 3:
+        h = int(s[0:1])
+        m = int(s[1:3])
+    elif len(s) == 2:
+        h = int(s[0:2])
+        m = 0
+    elif len(s) == 1:
+        h = int(s[0:1])
+        m = 0
     else:
         h = None
         m = None

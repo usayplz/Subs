@@ -59,8 +59,8 @@ class SMPP(object):
                 (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
 
                 # set time
-                if len(short_message) > 8:
-                    set_time_result = self.smstask.set_time(source_addr, short_message)
+                if len(short_message) > 6:
+                    set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
                     if set_time_result != '':
                         sms_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
                     else:
