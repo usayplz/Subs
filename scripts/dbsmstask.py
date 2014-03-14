@@ -42,6 +42,9 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def add_new_task(self, mobnum, in_text, out_text, status, delivery_date=None):
+        if not out_text:
+            return -1
+
         sql = '''
             insert into sender_smstask
                 (mobnum, in_text, out_text, delivery_date, status)
@@ -221,9 +224,9 @@ class dbSMSTask(object):
         '''
         sql_insert = '''
             insert into sender_subscriber
-                (mobnum, mailing_id, status, create_date)
+                (mobnum, mailing_id, status, create_date, subs_time)
             values
-                (%(mobnum)s, %(mailing_id)s, 0, NOW())
+                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "09:00")
         '''
         sql_update = '''
             update
@@ -588,7 +591,6 @@ class dbSMSTask(object):
                 and DATE_ADD(NOW(), INTERVAL 7 HOUR) between w.time_from and w.time_to
                 and w1.mailing_id = s.mailing_id
                 and DATE_ADD(NOW(), INTERVAL 4 HOUR) between w1.time_from and w1.time_to
-                and s.mobnum = '79021702030'
         '''
         try:
             self.cursor.execute(sql, { })
@@ -676,6 +678,9 @@ def main(args=None):
     for mailing in mailings:
         yrno_location, mailing_id = mailing
         for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
+            if int(item['temperature']) >= 0:
+                item['temperature'] = '+%s' % item['temperature']
+
             tuple_time = time.strptime(item['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
             item['time_from'] = datetime.datetime(*tuple_time[:6])
             tuple_time = time.strptime(item['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
