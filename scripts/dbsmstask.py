@@ -220,7 +220,7 @@ class dbSMSTask(object):
 
     def subscribe(self, mobnum, mailing_id):
         sql_select = '''
-            select count(*) from sender_subscriber where mobnum = %(mobnum)s
+            select count(*) from sender_subscriber where mobnum = %(mobnum)s and status = 0
         '''
         sql_insert = '''
             insert into sender_subscriber
