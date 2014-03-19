@@ -393,7 +393,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         if min_t0 and min_t1 and max_t0 and max_t1:
-            return u'%s. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, condition1)
+            return u'%s. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, condition1)
         return u''
 
     def get_today_weather(self, mailing_id):
@@ -484,7 +484,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
-            return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+            return u'%s. Сегодня днем, %+d %+d, %s, ветер %s %s м/c. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
         return u''
 
     def get_tomorrow_weather(self, mailing_id):
@@ -575,7 +575,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
-            return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+            return u'%s. Сегодня днем, %+d %+d, %s, ветер %s %s м/c. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
         return u''            
 
     def get_weather_subscribers(self):
@@ -676,18 +676,20 @@ def main(args=None):
     mailings = tasker.get_mailing_list()
     weather = yrnoWeather()
     for mailing in mailings:
-        yrno_location, mailing_id = mailing
-        for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
-            if int(item['temperature']) >= 0:
-                item['temperature'] = '+%s' % item['temperature']
+        try:
+            yrno_location, mailing_id = mailing
+            for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
+                if int(item['temperature']) >= 0:
+                    item['temperature'] = '+%s' % item['temperature']
 
-            tuple_time = time.strptime(item['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
-            item['time_from'] = datetime.datetime(*tuple_time[:6])
-            tuple_time = time.strptime(item['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
-            item['time_to'] = datetime.datetime(*tuple_time[:6])
-            item['text'] = u'%s° C, %s, %s ветер %s м/с' % (item['temperature'], item['condition'], item['wind_direction'], item['wind_speed'])
-            tasker.add_weather_text(mailing_id, item)
-
+                tuple_time = time.strptime(item['time_from'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+                item['time_from'] = datetime.datetime(*tuple_time[:6])
+                tuple_time = time.strptime(item['time_to'].replace("-", ""), "%Y%m%dT%H:%M:%S")
+                item['time_to'] = datetime.datetime(*tuple_time[:6])
+                item['text'] = u'%s° C, %s, %s ветер %s м/с' % (item['temperature'], item['condition'], item['wind_direction'], item['wind_speed'])
+                tasker.add_weather_text(mailing_id, item)
+        except:
+            pass
 
 def subs():
     logging.basicConfig(level=logging.DEBUG)
@@ -708,7 +710,7 @@ def subs():
             text = tasker.get_evening_weather(mailing_id)
             send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '18:00:00')
             tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
-        except:
+        except Exception, e:
             pass
 
 
