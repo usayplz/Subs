@@ -220,7 +220,7 @@ class dbSMSTask(object):
 
     def subscribe(self, mobnum, mailing_id):
         sql_select = '''
-            select count(*) from sender_subscriber where mobnum = %(mobnum)s and mailing_id = %(mailing_id)s
+            select count(*) from sender_subscriber where mobnum = %(mobnum)s
         '''
         sql_insert = '''
             insert into sender_subscriber
@@ -240,7 +240,6 @@ class dbSMSTask(object):
         try:
             self.cursor.execute(sql_select, {
                 'mobnum': mobnum,
-                'mailing_id': mailing_id,
             })
             row = self.cursor.fetchone()
             if row[0] > 0:
@@ -249,10 +248,15 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
             else:
+                # subscribe
                 self.cursor.execute(sql_insert, {
                     'mobnum': mobnum,
                     'mailing_id': mailing_id,
                 })
+
+                # send help
+                self.add_new_task(mobnum, u'help', u'Вы подписались на ежедневную погоду. Устанавливайте любое время доставки. Например *818*10# - погода будет отправлена в 10:00 утра.', 0)
+
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
@@ -282,7 +286,7 @@ class dbSMSTask(object):
     def check_tasks(self):
         sql = '''
             select
-                id, mobnum, out_text
+                id, mobnum, out_text, in_text
             from
                 sender_smstask
             where

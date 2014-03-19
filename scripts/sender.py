@@ -90,14 +90,16 @@ class SMPP(object):
                 self.smstask.update_task(-2, '', message_id, message_id)
                 self.logger.info('UNDELIVERED: %s' % message_id)
 
-    def send_sms(self, smpp, source_addr, short_message):
+    def send_sms(self, smpp, source_addr, short_message, from_num=None):
         """params:
             report: on
             encoding: UCS2
         """
         short_message = short_message.encode('utf_16_be')
+        if from_num is None:
+            from_num = self.ESME_NUM
         submit_pdu = SubmitSM(
-            source_addr=self.ESME_NUM,
+            source_addr=from_num,
             destination_addr=source_addr,
             message_payload=short_message,
             source_addr_ton=self.SOURCE_ADDR_TON,
@@ -128,10 +130,13 @@ class SMPP(object):
     def send_all(self):
         tasks = self.smstask.check_tasks()
         for task in tasks:
-            task_id, mobnum, out_text = task
+            task_id, mobnum, out_text, in_text = task
             self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, mobnum, out_text))
             self.smstask.update_task(-1, task_id, '', -1)
-            d = self.send_sms(self.smpp, mobnum, out_text)
+            from_num = self.ESME_NUM
+            if in_text == u'help':
+                from_num = '8180'
+            d = self.send_sms(self.smpp, mobnum, out_text, from_num)
             d.addBoth(self.message_sent, task_id)
 
 
