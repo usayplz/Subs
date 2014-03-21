@@ -228,32 +228,16 @@ class dbSMSTask(object):
             values
                 (%(mobnum)s, %(mailing_id)s, 0, NOW(), "09:00")
         '''
-        sql_update = '''
-            update
-                sender_subscriber
-            set
-                status = 0
-            where
-                mobnum = %(mobnum)s
-                and mailing_id = %(mailing_id)s
-        '''
         try:
             self.cursor.execute(sql_select, {
                 'mobnum': mobnum,
             })
             row = self.cursor.fetchone()
-            if row[0] > 0:
-                self.cursor.execute(sql_update, {
-                    'mobnum': mobnum,
-                    'mailing_id': mailing_id,
-                })
-            else:
-                # subscribe
+            if row[0] == 0:
                 self.cursor.execute(sql_insert, {
                     'mobnum': mobnum,
                     'mailing_id': mailing_id,
                 })
-
                 # send help
                 self.add_new_task(mobnum, u'help', u'Вы подписались на ежедневную погоду. Устанавливайте любое время доставки. Например *818*10# - погода будет отправлена в 10:00 утра.', 0)
 
@@ -449,7 +433,7 @@ class dbSMSTask(object):
 
         sql4 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 33 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 61 hour, '%%e %%b')
             from
                 sender_weathertext w, sender_mailing m
             where
