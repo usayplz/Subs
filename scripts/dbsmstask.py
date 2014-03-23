@@ -605,13 +605,28 @@ def subs():
     for subscriber in subscribers:
         try:
             mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
-            text = tasker.get_today_weather(mailing_id)
-            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
-            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
 
-            text = tasker.get_evening_weather(mailing_id)
-            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '18:00:00')
-            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+            # weather by time
+            # text = tasker.get_today_weather(mailing_id)
+            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
+            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+
+            # Sunday. Actions - sunday - on, unsubscribe - on, evening - off, by time - on in Monday
+            text = u'Вы отписаны от сервиса Погода 818, т.к. с 24 марта он становится платным (1 руб в день). Если вы хотите продолжить платную подписку, отправьте любой текст в ответ на это сообщение.'
+            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '09:20:00')
+            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)        
+
+            # evening weather
+            # text = tasker.get_evening_weather(mailing_id)
+            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '18:01:00')
+            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+        except Exception, e:
+            pass
+
+    for subscriber in subscribers:
+        try:
+            mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
+            tasker.unsubscribe(mobnum)            
         except Exception, e:
             pass
 
