@@ -87,6 +87,7 @@ class dbSMSTask(object):
     def _parse_time_from_message(self, short_message):
         subs_time = re.sub("^(\*8181|\*818)", "", short_message)
         subs_time = re.sub("[^\d]", "", subs_time)
+        print subs_time
         h = None
         m = 0
         try:
@@ -128,6 +129,7 @@ class dbSMSTask(object):
                 'subs_time': subs_time,
                 'mobnum': mobnum,
             })
+            self.clear_future_task(mobnum)
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
@@ -146,6 +148,23 @@ class dbSMSTask(object):
             self.add_new_task(mobnum, 'subs', text, 0, send_date)
 
         return subs_time
+
+    def clear_future_task(self, mobnum):
+        sql = '''
+            delete from 
+                sender_smstask
+            where 
+                mobnum = %(mobnum)s
+                and delivery_date > NOW()-interval 1 day
+        '''
+        try:
+            self.cursor.execute(sql, {
+                'mobnum': mobnum,
+            })
+            self.connection.commit()
+        except db.Error, e:
+            return 0
+        return 1
 
     def get_current_weather(self, mobnum):
         sql = '''
@@ -389,6 +408,14 @@ class dbSMSTask(object):
         condition = condition.replace(u'ясно', u'безоблачно')
         return condition
 
+    def get_time_weather(self, mailing_id, subs_time):
+        subs_time = self._parse_time_from_message(str(subs_time).zfill(8)[0:5])
+        h = int("%s%s" % (subs_time[0:2], subs_time[3:5]))
+        if h > 1600:
+            return self.get_evening_weather(mailing_id)
+        else:
+            return self.get_today_weather(mailing_id)
+
     def get_today_weather(self, mailing_id):
         sql0 = '''
             select 
@@ -607,7 +634,7 @@ def subs():
             mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
 
             # weather by time
-            text = tasker.get_today_weather(mailing_id)
+            text = tasker.get_time_weather(mailing_id, subs_time)
             send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
             tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
 
