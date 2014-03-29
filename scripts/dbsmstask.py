@@ -226,7 +226,7 @@ class dbSMSTask(object):
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
-                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "09:00")
+                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "18:00")
         '''
         try:
             self.cursor.execute(sql_select, {
@@ -239,7 +239,7 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
                 # send help
-                self.add_new_task(mobnum, u'help', u'Вы подписались на ежедневную погоду. Устанавливайте любое время доставки. Например *818*10# - погода будет отправлена в 10:00 утра.', 0)
+                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:00 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
 
             self.connection.commit()
         except db.Error, e:
@@ -607,14 +607,14 @@ def subs():
             mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
 
             # weather by time
-            # text = tasker.get_today_weather(mailing_id)
-            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
-            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+            text = tasker.get_today_weather(mailing_id)
+            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
+            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
 
             # Sunday. Actions - sunday - on, unsubscribe - on, evening - off, by time - on in Monday
-            text = u'Вы отписаны от сервиса Погода 818, т.к. с 24 марта он становится платным (1 руб в день). Если вы хотите продолжить платную подписку, отправьте любой текст в ответ на это сообщение.'
-            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '09:20:00')
-            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)        
+            # text = u'Вы отписаны от сервиса Погода 818, т.к. с 24 марта он становится платным (1 руб в день). Если вы хотите продолжить платную подписку, отправьте любой текст в ответ на это сообщение.'
+            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '09:20:00')
+            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)        
 
             # evening weather
             # text = tasker.get_evening_weather(mailing_id)
@@ -623,12 +623,12 @@ def subs():
         except Exception, e:
             pass
 
-    for subscriber in subscribers:
-        try:
-            mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
-            tasker.unsubscribe(mobnum)            
-        except Exception, e:
-            pass
+    # for subscriber in subscribers:
+        # try:
+            # mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
+            # tasker.unsubscribe(mobnum)            
+        # except Exception, e:
+            # pass
 
 
 if __name__ == '__main__':
