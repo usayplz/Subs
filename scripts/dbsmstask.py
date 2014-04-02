@@ -87,7 +87,6 @@ class dbSMSTask(object):
     def _parse_time_from_message(self, short_message):
         subs_time = re.sub("^(\*8181|\*818)", "", short_message)
         subs_time = re.sub("[^\d]", "", subs_time)
-        print subs_time
         h = None
         m = 0
         try:
@@ -399,9 +398,9 @@ class dbSMSTask(object):
         except db.Error, e:
             #self.raise_error(e)
             return u''
-        if min_t0 and min_t1 and max_t0 and max_t1:
-            return u'%s. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, self.night_replace(condition1))
-        return u''
+        #if min_t0 and min_t1 and max_t0 and max_t1:
+        return u'%s. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, self.night_replace(condition1))
+        #return u''
 
     def night_replace(self, condition):
         condition = condition.replace(u'солнечно', u'безоблачно')
@@ -503,9 +502,9 @@ class dbSMSTask(object):
         except db.Error, e:
             #self.raise_error(e)
             return u''
-        if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
-            return u'%s. Сегодня днем, %+d %+d, %s, ветер %s %s м/c. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
-        return u''
+        #if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
+        return u'%s. Сегодня днем, %+d %+d, %s, ветер %s %s м/c. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+        #return u''
 
     def get_weather_subscribers(self):
         sql = '''
