@@ -9,6 +9,7 @@ import datetime
 from bwc_city import BWCCity
 from yandex_weather import YandexWeather
 from yrno_weather import yrnoWeather
+from mail import send_mail
 
 class dbSMSTask(object):
     WEATHER_TIMEOUT = 30*60     # 30 min
@@ -600,6 +601,7 @@ def main(args=None):
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
+    errors = 0
     tasker.clear_weather_texts()
     mailings = tasker.get_mailing_list()
     weather = yrnoWeather()
@@ -617,12 +619,14 @@ def main(args=None):
                 item['text'] = u'%s° C, %s, %s ветер %s м/с' % (item['temperature'], item['condition'], item['wind_direction'], item['wind_speed'])
                 tasker.add_weather_text(mailing_id, item)
         except:
-            pass
+            errors = errors + 1
+    send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Got weather. \n\n Errors: %s' % (errors))
 
 def subs():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
+    errors = 0
     db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
@@ -647,14 +651,9 @@ def subs():
             # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '18:01:00')
             # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
         except Exception, e:
-            pass
+            errors = errors + 1
 
-    # for subscriber in subscribers:
-        # try:
-            # mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
-            # tasker.unsubscribe(mobnum)            
-        # except Exception, e:
-            # pass
+    send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Subscribers created. \n\n Errors: %s' % (errors))
 
 
 if __name__ == '__main__':
