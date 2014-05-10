@@ -337,7 +337,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 47 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+23-9 hour
         '''
 
         sql1 = '''
@@ -347,18 +347,18 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 29 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour
         '''
 
         sql3 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 48 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24 hour, '%%e %%b')
             from
                 sender_weathertext w, sender_mailing m
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(NOW())+interval 37 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 37-9 hour between w.time_from and w.time_to
         '''
 
         sql4 = '''
@@ -369,7 +369,7 @@ class dbSMSTask(object):
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(NOW())+interval 29 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+4-9 hour between w.time_from and w.time_to
         '''
 
         try:
@@ -377,6 +377,8 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
             self.connection.commit()
             max_t0, min_t0 = row
+            max_t0 = '%+d' %  max_t0
+            min_t0 = '%+d' %  min_t0        
             if max_t0 == min_t0:
                 max_t0 = ''
 
@@ -384,6 +386,8 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
             self.connection.commit()
             max_t1, min_t1 = row
+            max_t1 = '%+d' %  max_t1
+            min_t1 = '%+d' %  min_t1
             if max_t1 == min_t1:
                 max_t1 = ''
 
@@ -400,7 +404,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         #if min_t0 and min_t1 and max_t0 and max_t1:
-        return u'%s. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, self.night_replace(condition1))
+        return u'%s. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, self.night_replace(condition1))
         #return u''
 
     def night_replace(self, condition):
@@ -424,7 +428,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(NOW())+interval 0 hour and date(NOW())+interval 23 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))-interval 2 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour
         '''
 
         sql1 = '''
@@ -434,7 +438,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 47 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+23-9 hour
         '''
 
         sql2 = '''
@@ -444,7 +448,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(NOW())+interval 23 hour and date(NOW())+interval 29 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour
         '''
 
         sql3 = '''
@@ -455,18 +459,18 @@ class dbSMSTask(object):
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(NOW())+interval 13 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 13-9 hour between w.time_from and w.time_to
         '''
 
         sql4 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(NOW())+interval 61 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24 hour, '%%e %%b')
             from
                 sender_weathertext w, sender_mailing m
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(NOW())+interval 37 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 37-9 hour between w.time_from and w.time_to
         '''
 
         try:
@@ -474,6 +478,8 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
             self.connection.commit()
             max_t0, min_t0 = row
+            max_t0 = '%+d' %  max_t0
+            min_t0 = '%+d' %  min_t0
             if max_t0 == min_t0:
                 max_t0 = ''
 
@@ -481,6 +487,8 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
             self.connection.commit()
             max_t1, min_t1 = row
+            max_t1 = '%+d' %  max_t1
+            min_t1 = '%+d' %  min_t1
             if max_t1 == min_t1:
                 max_t1 = ''
 
@@ -488,6 +496,8 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
             self.connection.commit()
             max_t2, min_t2 = row
+            max_t2 = '%+d' %  max_t2
+            min_t2 = '%+d' %  min_t2
             if max_t2 == min_t2:
                 max_t2 = ''
 
@@ -504,22 +514,18 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         #if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
-        return u'%s. Сегодня днем, %+d %+d, %s, ветер %s %s м/c. Завтра, %s: %+d %+d, %s, ветер %s %s м/c. Сегодня ночью: %+d %+d. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+        return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
         #return u''
 
     def get_weather_subscribers(self):
         sql = '''
             select
-                s.mobnum, w.text, s.id, s.mailing_id, w1.temperature, m.name, s.subs_time
+                s.mobnum, s.id, s.mailing_id, m.name, s.subs_time
             from
-                sender_subscriber s, sender_weathertext w, sender_weathertext w1, sender_mailing m
+                sender_subscriber s, sender_mailing m
             where 
                 s.status = 0 -- подписан
                 and m.id = s.mailing_id
-                and w.mailing_id = s.mailing_id
-                and DATE_ADD(NOW(), INTERVAL 7 HOUR) between w.time_from and w.time_to
-                and w1.mailing_id = s.mailing_id
-                and DATE_ADD(NOW(), INTERVAL 4 HOUR) between w1.time_from and w1.time_to
         '''
         try:
             self.cursor.execute(sql, { })
@@ -573,7 +579,7 @@ class dbSMSTask(object):
             insert into sender_weathertext
                 (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date, pressure)
             values
-                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00'), NOW(), %(pressure)s)
+                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00')-interval 1 second, NOW(), %(pressure)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -634,22 +640,12 @@ def subs():
     subscribers = tasker.get_weather_subscribers()
     for subscriber in subscribers:
         try:
-            mobnum, weather, sid, mailing_id, temperature, name, subs_time = subscriber
+            mobnum, sid, mailing_id, name, subs_time = subscriber
 
             # weather by time
             text = tasker.get_time_weather(mailing_id, subs_time)
             send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
             tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
-
-            # Sunday. Actions - sunday - on, unsubscribe - on, evening - off, by time - on in Monday
-            # text = u'Вы отписаны от сервиса Погода 818, т.к. с 24 марта он становится платным (1 руб в день). Если вы хотите продолжить платную подписку, отправьте любой текст в ответ на это сообщение.'
-            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '09:20:00')
-            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)        
-
-            # evening weather
-            # text = tasker.get_evening_weather(mailing_id)
-            # send_date = "%s %s" % (str(datetime.datetime.now())[0:10], '18:01:00')
-            # tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
         except Exception, e:
             errors = errors + 1
 
