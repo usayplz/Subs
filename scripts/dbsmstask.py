@@ -537,12 +537,14 @@ class dbSMSTask(object):
 
     def get_mailing_list(self):
         sql = '''
-            select
-                m.yrno_location_code, m.id
+            select 
+                m.yrno_location_code, m.id 
             from
-                sender_mailing m
+                sender_mailing m 
             where 
-                m.yrno_location_code is not null
+                m.yrno_location_code is not null 
+                and m.id not in (select w.mailing_id from sender_weathertext w 
+                    where m.id = w.mailing_id and w.time_from > NOW()+interval 40 hour)
         '''
         try:
             self.cursor.execute(sql, {})
