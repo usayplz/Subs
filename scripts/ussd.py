@@ -74,7 +74,7 @@ class SMPP(object):
                 
                 # if my_num in '*818#' or my_num in '*8181#':
                 self.logger.info('mailing_id = %s' % mailing_id)
-                if weather != '':
+                if weather:
                     self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
                     task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
                     self.smstask.subscribe(source_addr, mailing_id)

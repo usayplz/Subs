@@ -67,7 +67,7 @@ class SMPP(object):
                 else:
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
-                    if weather != '':
+                    if weather:
                         task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
                         self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
                         self.smstask.subscribe(source_addr, mailing_id)
@@ -136,8 +136,12 @@ class SMPP(object):
             from_num = self.ESME_NUM
             if in_text == u'help':
                 from_num = '8180'
-            d = self.send_sms(self.smpp, mobnum, out_text, from_num)
-            d.addBoth(self.message_sent, task_id)
+
+            if out_text:
+                d = self.send_sms(self.smpp, mobnum, out_text, from_num)
+                d.addBoth(self.message_sent, task_id)
+            else:
+                self.logger.error('ERROR: subs has not weather! task_id, mobnum = %s, %s' % (task_id, mobnum))
 
 
 def critical(msg, *args, **kwargs):
