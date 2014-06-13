@@ -11,6 +11,11 @@ from yandex_weather import YandexWeather
 from yrno_weather import yrnoWeather
 from mail import send_mail
 
+# db config
+sys.path.append('/var/www/subs/')
+from local_settings import DATABASES
+db_config = DATABASES['default']
+
 class dbSMSTask(object):
     WEATHER_TIMEOUT = 30*60     # 30 min
 
@@ -28,12 +33,13 @@ class dbSMSTask(object):
     def connect(self):
         try:
             self.connection = db.connect(
-                host=self.db_config.get('host'),
-                user=self.db_config.get('user'),
-                passwd=self.db_config.get('passwd'),
-                db=self.db_config.get('db'),
+                host=db_config.get('HOST'),
+                user=db_config.get('USER'), 
+                passwd=db_config.get('PASSWORD'), 
+                db=db_config.get('NAME'), 
                 charset='utf8',
             )
+
             self.cursor = self.connection.cursor()
             self.cursor.execute('SET SESSION query_cache_type = OFF')
             self.cursor.execute('SET TIME_ZONE = "+00:00"')
@@ -606,7 +612,6 @@ def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
-    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
     errors = 0
@@ -635,7 +640,6 @@ def subs():
     logger = logging.getLogger(__name__)
 
     errors = 0
-    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
     tasker = dbSMSTask(db_config, logger)
 
     # создаем рассылку

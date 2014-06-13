@@ -10,6 +10,10 @@ from smpp.pdu.operations import *
 from smpp.pdu.pdu_types import *
 import dbsmstask, pid
 
+# db config
+sys.path.append('/var/www/subs/')
+from local_settings import DATABASES
+
 
 class SMPP(object):
     ESME_NUM = '*8181#'
@@ -138,7 +142,7 @@ if __name__ == '__main__':
 
     # start
     logger.info('[START PROGRAM]')
-    db_config = {'host': 'localhost', 'user': 'subs', 'passwd': 'njH(*DHWH2)', 'db': 'subsdb'}
+    db_config = DATABASES['default']
     smpp_config = SMPPClientConfig(
         host='81.18.113.146', port=3204, username='amstudio', password='Yrj39sVa', enquireLinkTimerSecs=60, )
     SMPP(smpp_config, db_config, logger).run()
