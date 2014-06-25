@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, logging, datetime
+import sys, os, logging, datetime
 from twisted.internet import reactor, defer, task
 from smpp.twisted.client import SMPPClientTransceiver, SMPPClientService
 from smpp.twisted.config import SMPPClientConfig

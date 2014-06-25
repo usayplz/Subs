@@ -228,17 +228,20 @@ class dbSMSTask(object):
                 bwc_location_code = %(bwc_location_code)s
         '''
         try:
+            bwc_location_code = BWCCity(mobnum)
+            self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                return row[0]
+
             self.cursor.execute(sql_mailing_id, { "mobnum": mobnum, })
             row = self.cursor.fetchone()
             self.connection.commit()
             if row:
                 return row[0]
-            else:
-                bwc_location_code = BWCCity(mobnum)
-                self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
-                row = self.cursor.fetchone()
-                self.connection.commit()
-                return row[0] if row else None
+
+            return None
 
         except db.Error, e:
             self.raise_error(e)
