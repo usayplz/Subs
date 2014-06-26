@@ -172,7 +172,7 @@ class dbSMSTask(object):
             return 0
         return 1
 
-    def get_current_weather(self, mobnum):
+    def get_current_weather(self, mobnum, ussd=None):
         sql = '''
             select 
                 m.name, w.text
@@ -185,7 +185,7 @@ class dbSMSTask(object):
             limit 1
         '''
         try:
-            mailing_id = self.get_mailing_id(mobnum)
+            mailing_id = self.get_mailing_id(mobnum) if ussd is None else self.get_mailing_id_ussd(mobnum)
             if mailing_id:
                 (weather, last_date) = self.weather.get(mailing_id, (None, None))
                 if weather and last_date and time.time()-self.weather.get(mailing_id, (None, 0))[1] < self.WEATHER_TIMEOUT:
@@ -236,6 +236,45 @@ class dbSMSTask(object):
                 return row[0]
 
             self.cursor.execute(sql_mailing_id, { "mobnum": mobnum, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                return row[0]
+
+            return None
+
+        except db.Error, e:
+            self.raise_error(e)
+
+    def get_mailing_id_ussd(self, mobnum):
+        sql_mailing_id = '''
+            select
+                mailing_id, status
+            from
+                sender_subscriber
+            where
+                mobnum = %(mobnum)s
+            order by
+                create_date desc
+            limit 1
+        '''
+        sql_bwc_code = '''
+            select
+                id, name
+            from
+                sender_mailing
+            where
+                bwc_location_code = %(bwc_location_code)s
+        '''
+        try:
+            self.cursor.execute(sql_mailing_id, { "mobnum": mobnum, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                return row[0]
+
+            bwc_location_code = BWCCity(mobnum)
+            self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
             row = self.cursor.fetchone()
             self.connection.commit()
             if row:

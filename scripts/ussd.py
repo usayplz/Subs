@@ -60,7 +60,7 @@ class SMPP(object):
                     my_num = dest_addr
 
                 self.logger.info('current my_num = %s' % my_num)
-                (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
+                (mailing_id, weather) = self.smstask.get_current_weather(source_addr, 1)
 
                 # set time
                 if len(short_message) > 6:
