@@ -289,11 +289,21 @@ class dbSMSTask(object):
         sql_select = '''
             select count(*) from sender_subscriber where mobnum = %(mobnum)s and status = 0
         '''
+
         sql_insert = '''
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
                 (%(mobnum)s, %(mailing_id)s, 0, NOW(), "18:30")
+        '''
+
+        sql_update = '''
+            update
+                sender_subscriber
+            set
+                mailing_id = %(mailing_id)s
+            where
+                mobnum = %(mobnum)s
         '''
         try:
             self.cursor.execute(sql_select, {
@@ -307,6 +317,11 @@ class dbSMSTask(object):
                 })
                 # send help
                 self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
+            else:
+                self.cursor.execute(sql_update, {
+                    'mobnum': mobnum,
+                    'mailing_id': mailing_id,
+                })                
 
             self.connection.commit()
         except db.Error, e:
@@ -654,10 +669,10 @@ class dbSMSTask(object):
             select 
                 distinct mobnum
             from
-                sender_smstask s
+                sender_smstask
             where
-                in_text like '*818%' 
-                and delivery_date > now()-interval 10 hour
+                in_text like '*818%%'
+                and delivery_date > now()-interval 30 minute
         '''
         try:
             self.cursor.execute(sql, {})
@@ -666,6 +681,27 @@ class dbSMSTask(object):
             self.raise_error(e)
             return []
         return self.cursor.fetchall()
+
+    def update_location(self, mobnum):
+        sql_bwc_code = '''
+            select
+                id, name
+            from
+                sender_mailing
+            where
+                bwc_location_code = %(bwc_location_code)s
+        '''
+        try:
+            bwc_location_code = BWCCity(mobnum)
+            self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                self.subscribe(mobnum, row[0])
+
+        except db.Error, e:
+            self.raise_error(e)
+
 
 
 def main(args=None):
@@ -726,9 +762,8 @@ def ussd_location():
 
     requests = tasker.get_ussd_requests()
     for request in requests:
-        mobnum = request
-        print mobnum
-        # tasker.update_location(mobnum)
+        mobnum = request[0]
+        tasker.update_location(mobnum)
 
 
 if __name__ == '__main__':
