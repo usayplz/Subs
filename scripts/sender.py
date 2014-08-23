@@ -34,7 +34,7 @@ class SMPP(object):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(30)
+            self.lc_send_all.start(20)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
