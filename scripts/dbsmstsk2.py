@@ -649,23 +649,24 @@ class dbSMSTask(object):
             return -1
         return self.cursor.lastrowid
 
-def get_ussd_requests():
-    sql = '''
-        select 
-            distinct mobnum
-        from
-            sender_smstask s
-        where
-            in_text like '*818%' 
-            and delivery_date > now()-interval 10 hour
-    '''
-    try:
-        self.cursor.execute(sql, {})
-        self.connection.commit()
-    except db.Error, e:
-        self.raise_error(e)
-        return []
-    return self.cursor.fetchall()
+    def get_ussd_requests(self):
+        sql = '''
+            select 
+                distinct mobnum
+            from
+                sender_smstask s
+            where
+                in_text like '*818%' 
+                and delivery_date > now()-interval 10 hour
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return []
+        return self.cursor.fetchall()
+
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
@@ -717,11 +718,17 @@ def subs():
     send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Subscribers created. \n\n Errors: %s' % (errors))
 
 def ussd_location():
-    requests = get_ussd_requests()
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    errors = 0
+    tasker = dbSMSTask(db_config, logger)
+
+    requests = tasker.get_ussd_requests()
     for request in requests:
         mobnum = request
         print mobnum
-        # update_location(mobnum)
+        # tasker.update_location(mobnum)
 
 
 if __name__ == '__main__':
