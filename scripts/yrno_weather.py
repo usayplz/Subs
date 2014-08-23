@@ -131,6 +131,7 @@ class yrnoWeather():
             'snow'          :   u'снег',
             'cloudy'        :   u'облачно',
             'light rain'    :   u'небольшой дождь',
+            'light rain showers'    :   u'небольшой дождь',
             'rain showers'  :   u'ливни',
             'rain showers with thunder' :   u'дождь с грозой',
             'sleet showers' :   u'сильные дожди со снегом',
