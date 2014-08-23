@@ -319,8 +319,8 @@ class dbSMSTask(object):
                 self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
             else:
                 self.cursor.execute(sql_update, {
-                    'mobnum': mobnum,
                     'mailing_id': mailing_id,
+                    'mobnum': mobnum,
                 })                
 
             self.connection.commit()

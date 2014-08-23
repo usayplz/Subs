@@ -289,11 +289,21 @@ class dbSMSTask(object):
         sql_select = '''
             select count(*) from sender_subscriber where mobnum = %(mobnum)s and status = 0
         '''
+
         sql_insert = '''
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
                 (%(mobnum)s, %(mailing_id)s, 0, NOW(), "18:30")
+        '''
+
+        sql_update = '''
+            update
+                sender_subscriber
+            set
+                mailing_id = %(mailing_id)s
+            where
+                mobnum = %(mobnum)s
         '''
         try:
             self.cursor.execute(sql_select, {
@@ -307,6 +317,11 @@ class dbSMSTask(object):
                 })
                 # send help
                 self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
+            else:
+                self.cursor.execute(sql_update, {
+                    'mailing_id': mailing_id,
+                    'mobnum': mobnum,
+                })                
 
             self.connection.commit()
         except db.Error, e:
@@ -649,6 +664,45 @@ class dbSMSTask(object):
             return -1
         return self.cursor.lastrowid
 
+    def get_ussd_requests(self):
+        sql = '''
+            select 
+                distinct mobnum
+            from
+                sender_smstask
+            where
+                in_text like '*818%%'
+                and delivery_date > now()-interval 30 minute
+        '''
+        try:
+            self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+            return []
+        return self.cursor.fetchall()
+
+    def update_location(self, mobnum):
+        sql_bwc_code = '''
+            select
+                id, name
+            from
+                sender_mailing
+            where
+                bwc_location_code = %(bwc_location_code)s
+        '''
+        try:
+            bwc_location_code = BWCCity(mobnum)
+            self.cursor.execute(sql_bwc_code, { "bwc_location_code": bwc_location_code, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                self.subscribe(mobnum, row[0])
+
+        except db.Error, e:
+            self.raise_error(e)
+
+
 
 def main(args=None):
     logging.basicConfig(level=logging.DEBUG)
@@ -699,9 +753,27 @@ def subs():
 
     send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Subscribers created. \n\n Errors: %s' % (errors))
 
+def ussd_location():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    errors = 0
+    tasker = dbSMSTask(db_config, logger)
+
+    requests = tasker.get_ussd_requests()
+    for request in requests:
+        mobnum = request[0]
+        tasker.update_location(mobnum)
+
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+    if len(sys.argv) <= 1:
+        print "Usage: main | subs"
+        sys.exit(1)
+
+    if sys.argv[1] == 'subs':
         subs()
+    elif sys.argv[1] == 'ussd_location':
+        ussd_location()
     else:
         main()
