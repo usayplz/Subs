@@ -2,3 +2,4 @@
 local*.*
 *.pid
 *.log
+.DS_Store
