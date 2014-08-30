@@ -717,7 +717,7 @@ def main(args=None):
     for mailing in mailings:
         try:
             yrno_location, mailing_id = mailing
-            for i, item in enumerate(weather.get_weather_by_hour(yrno_location)):
+            for i, item in enumerate(weather.get_weather_by_hour(yrno_location.encode('UTF-8'))):
                 if int(item['temperature']) >= 0:
                     item['temperature'] = '+%s' % item['temperature']
 
@@ -729,7 +729,8 @@ def main(args=None):
                 tasker.add_weather_text(mailing_id, item)
         except:
             errors = errors + 1
-    send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Got weather. \n\n Errors: %s' % (errors))
+    if errors > 0:
+        send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Got weather. \n\n Errors: %s' % (errors))
 
 def subs():
     logging.basicConfig(level=logging.DEBUG)
