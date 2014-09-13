@@ -148,6 +148,13 @@ class yrnoWeather():
             'snow showers and thunder' :   u'мокрый снег и гроза',
             'rain and thunder' :   u'дождь и гроза',
             'sleet and thunder' :   u'мокрый снег и гроза',
+            'light sleet' :   u'небольшой снег',
+            'heavy sleet' :   u'мокрый снег',
+            'heavy snow' :   u'сильный снег',
+            'light sleet showers' :   u'небольшой мокрый снег',
+            'light snow'    : u'небольшой снег',
+            'light snow showers'    : u'небольшой снег',
+            'heavy snow showers'    : u'сильный снег',
         }
         if value in dict_enru_wind_direction:
             value = dict_enru_wind_direction[value]
