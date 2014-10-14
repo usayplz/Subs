@@ -358,7 +358,7 @@ class dbSMSTask(object):
             where
                 status = 0
                 and delivery_date <= NOW()
-            limit 10
+            limit 15
         '''
         try:
             self.cursor.execute(sql, {})

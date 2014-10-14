@@ -294,7 +294,7 @@ class dbSMSTask(object):
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
-                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "19:00")
+                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "19:30")
         '''
 
         sql_update = '''
@@ -316,7 +316,7 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
                 # send help
-                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 19:00 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
+                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 19:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
             else:
                 self.cursor.execute(sql_update, {
                     'mailing_id': mailing_id,
@@ -358,7 +358,7 @@ class dbSMSTask(object):
             where
                 status = 0
                 and delivery_date <= NOW()
-            limit 10
+            limit 30
         '''
         try:
             self.cursor.execute(sql, {})

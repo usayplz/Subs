@@ -34,7 +34,7 @@ class SMPP(object):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(20)
+            self.lc_send_all.start(10)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
@@ -112,8 +112,7 @@ class SMPP(object):
             dest_addr_npi=self.DEST_ADDR_NPI,
             esm_class=EsmClass(EsmClassMode.DEFAULT, EsmClassType.DEFAULT),
             protocol_id=0,
-            registered_delivery=RegisteredDelivery(
-                RegisteredDeliveryReceipt.SMSC_DELIVERY_RECEIPT_REQUESTED),
+            registered_delivery=RegisteredDelivery(RegisteredDeliveryReceipt.SMSC_DELIVERY_RECEIPT_REQUESTED),
             replace_if_present_flag=ReplaceIfPresentFlag.DO_NOT_REPLACE,
             data_coding=DataCoding(DataCodingScheme.DEFAULT, DataCodingDefault.UCS2),
         )
@@ -176,6 +175,6 @@ if __name__ == '__main__':
     logger.info('[START PROGRAM]')
     db_config = DATABASES['default']
     smpp_config = SMPPClientConfig(
-        host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=60, )
+        host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=120, responseTimerSecs=600, )
     SMPP(smpp_config, db_config, logger).run()
     reactor.run()
