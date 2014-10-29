@@ -56,7 +56,7 @@ class dbSMSTask(object):
             insert into sender_smstask
                 (mobnum, in_text, out_text, delivery_date, status)
             values
-                (%(mobnum)s, %(in_text)s, %(out_text)s, ifnull(CONVERT_TZ(%(delivery_date)s, @@session.time_zone, '-09:00'), NOW()), %(status)s)
+                (%(mobnum)s, %(in_text)s, %(out_text)s, ifnull(CONVERT_TZ(%(delivery_date)s, @@session.time_zone, '-08:00'), NOW()), %(status)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -294,7 +294,7 @@ class dbSMSTask(object):
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
-                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "19:30")
+                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "18:00")
         '''
 
         sql_update = '''
@@ -316,7 +316,7 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
                 # send help
-                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 19:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
+                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:00 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
             else:
                 self.cursor.execute(sql_update, {
                     'mailing_id': mailing_id,
@@ -358,7 +358,7 @@ class dbSMSTask(object):
             where
                 status = 0
                 and delivery_date <= NOW()
-            limit 30
+            limit 15
         '''
         try:
             self.cursor.execute(sql, {})
@@ -400,7 +400,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+23-9 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+23-9 hour
         '''
 
         sql1 = '''
@@ -410,18 +410,18 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+7-9 hour
         '''
 
         sql3 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24 hour, '%%e %%b')
             from
                 sender_weathertext w, sender_mailing m
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 37-9 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 37-9 hour between w.time_from and w.time_to
         '''
 
         sql4 = '''
@@ -432,7 +432,7 @@ class dbSMSTask(object):
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+4-9 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+4-9 hour between w.time_from and w.time_to
         '''
 
         try:
@@ -491,7 +491,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))-interval 2 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))-interval 2 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 23-9 hour
         '''
 
         sql1 = '''
@@ -501,7 +501,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+23-9 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+7-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+23-9 hour
         '''
 
         sql2 = '''
@@ -511,7 +511,7 @@ class dbSMSTask(object):
                 sender_weathertext w
             where
                 w.mailing_id = %(mailing_id)s
-                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24+7-9 hour
+                and w.time_from between date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 23-9 hour and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24+7-9 hour
         '''
 
         sql3 = '''
@@ -522,18 +522,18 @@ class dbSMSTask(object):
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 13-9 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 13-9 hour between w.time_from and w.time_to
         '''
 
         sql4 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 24 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24 hour, '%%e %%b')
             from
                 sender_weathertext w, sender_mailing m
             where
                 m.id = %(mailing_id)s
                 and w.mailing_id = m.id
-                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+09:00'))+interval 37-9 hour between w.time_from and w.time_to
+                and date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 37-9 hour between w.time_from and w.time_to
         '''
 
         try:
@@ -629,7 +629,7 @@ class dbSMSTask(object):
 
     def add_weather_text(self, mailing_id, weather):
         sql = '''
-            select count(*) from sender_weathertext where time_from = CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00') and mailing_id = %(mailing_id)s
+            select count(*) from sender_weathertext where time_from = CONVERT_TZ(%(time_from)s, @@session.time_zone, '-08:00') and mailing_id = %(mailing_id)s
         '''
         try:
             self.cursor.execute(sql, { 'time_from': weather['time_from'], 'mailing_id': mailing_id })
@@ -644,7 +644,7 @@ class dbSMSTask(object):
             insert into sender_weathertext
                 (mailing_id, text, temperature, wcondition, wind_direction, wind_speed, time_from, time_to, create_date, pressure)
             values
-                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-09:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-09:00')-interval 1 second, NOW(), %(pressure)s)
+                (%(mailing_id)s, %(text)s, %(temperature)s, %(condition)s, %(wind_direction)s, %(wind_speed)s, CONVERT_TZ(%(time_from)s, @@session.time_zone, '-08:00'), CONVERT_TZ(%(time_to)s, @@session.time_zone, '-08:00')-interval 1 second, NOW(), %(pressure)s)
         '''
         try:
             self.cursor.execute(sql, {
@@ -766,6 +766,16 @@ def ussd_location():
         mobnum = request[0]
         tasker.update_location(mobnum)
 
+def test():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    tasker = dbSMSTask(db_config, logger)
+
+    requests = tasker.check_tasks()
+    for request in requests:
+        id, mobnum, p1, p2 = request
+        print mobnum
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
@@ -776,5 +786,7 @@ if __name__ == '__main__':
         subs()
     elif sys.argv[1] == 'ussd_location':
         ussd_location()
+    elif sys.argv[1] == 'test':
+        test()
     else:
         main()

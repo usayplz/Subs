@@ -26,7 +26,8 @@ DATABASES = {
     }
 }
 
-TIME_ZONE = 'Asia/Irkutsk'
+# TIME_ZONE = 'Asia/Irkutsk'
+TIME_ZONE = 'Asia/Hong_Kong'
 LANGUAGE_CODE = 'ru-RU'
 
 SITE_ID = 1
