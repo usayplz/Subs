@@ -25,6 +25,19 @@ class Mailing(models.Model):
         verbose_name_plural = _(u'Рассылки')
 
 
+# Рассылки
+class Data(models.Model):
+    name = models.CharField(_(u'Номер'), max_length=11)
+    bwc_location_code = models.CharField(_(u'Идентификатор города в bwc'), max_length=20, null=True, blank=True)
+    sent = models.SmallIntegerField(_(u'Послано'), null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
 # Привязка мобильных к рассылкам
 class Subscriber(models.Model):
     SUBS_STATUSES = (

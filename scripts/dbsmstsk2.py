@@ -745,13 +745,98 @@ def subs():
             mobnum, sid, mailing_id, name, subs_time = subscriber
 
             # weather by time
-            text = tasker.get_time_weather(mailing_id, subs_time)
-            send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
-            tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+            #text = tasker.get_time_weather(mailing_id, subs_time)
+            #send_date = "%s %s" % (str(datetime.datetime.now())[0:10], subs_time)
+            #tasker.add_new_task(mobnum, 'subs', text, 0, send_date)
+            print mobnum
         except Exception, e:
             errors = errors + 1
 
-    send_mail('subs@foxthrottle.com', ['metasize@gmail.com'], 'subs', 'Subscribers created. \n\n Errors: %s' % (errors))
+    send_mail('subs@foxthrottle.com', ['usayplz@gmail.com'], 'subs', 'Subscribers created. \n\n Errors: ', ['1.txt'])
+
+def data():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    tasker = dbSMSTask(db_config, logger)
+
+    # ##
+    sql_update = '''
+        update sender_data set sent = 2 where name = %(mobnum)s and sent is null 
+    '''
+    f = open('mobnums.txt', 'r')
+    for mobnum in f.read().split():
+        print mobnum
+        try:
+            tasker.cursor.execute(sql_update, { 'mobnum': mobnum })
+            tasker.connection.commit() # or will be use a cache
+        except db.Error, e:
+            pass
+
+    f.close()
+    return 0
+    sys.exit(1)
+    # ##
+
+    sql = '''
+        select
+            id, name, bwc_location_code
+        from
+            sender_mailing
+    '''
+    try:
+        tasker.cursor.execute(sql, {})
+        tasker.connection.commit() # or will be use a cache
+    except db.Error, e:
+        tasker.raise_error(e)
+        return []
+        
+    datas = tasker.cursor.fetchall()
+
+    sqli = '''
+        insert into sender_data
+            (name, bwc_location_code)
+        values
+            (%(name)s, %(bwc_location_code)s)
+    '''
+
+    errors = 0
+    f = open('base.log', 'r')
+    for line in f:
+        mobnum = u''
+        address = u''
+
+        try:
+            mobnum = "7%s" % line.split('|')[0]
+            address = line.split('|')[3].decode("utf-8")
+        except:
+            continue
+
+        # print mobnum[1]
+        if len(mobnum) > 2 and mobnum[1] != '9':
+            continue
+
+        name = u''
+        bwc_location_code = 0
+
+        for data in datas:
+            id, name, bwc_location_code = data
+            name = unicode(name)
+            if name in address:
+                break
+
+        if name in address:
+            tasker.cursor.execute(sqli, {
+                'name': mobnum,
+                'bwc_location_code': bwc_location_code,
+            })
+            tasker.connection.commit()
+        else:
+            errors = errors+1
+            print line
+
+    f.close()
+
 
 def ussd_location():
     logging.basicConfig(level=logging.DEBUG)
@@ -776,4 +861,4 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'ussd_location':
         ussd_location()
     else:
-        main()
+        data()

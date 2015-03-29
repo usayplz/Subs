@@ -92,7 +92,7 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def _parse_time_from_message(self, short_message):
-        subs_time = re.sub("^(\*8181|\*818)", "", short_message)
+        subs_time = re.sub("^(\*8181|\*818|\*4181|\*418)", "", short_message)
         subs_time = re.sub("[^\d]", "", subs_time)
         h = None
         m = 0
@@ -294,7 +294,7 @@ class dbSMSTask(object):
             insert into sender_subscriber
                 (mobnum, mailing_id, status, create_date, subs_time)
             values
-                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "18:00")
+                (%(mobnum)s, %(mailing_id)s, 0, NOW(), "20:30")
         '''
 
         sql_update = '''
@@ -316,7 +316,7 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
                 # send help
-                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 818. Прогноз доставляется в 18:00 ежедневно. Устанавливайте любое время доставки. Например: при наборе *818*10# - погода будет отправляться в 10:00 утра. Стоимость 1 р. в сутки.', 0)
+                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 418. Прогноз доставляется в 20:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *418*10# - погода будет отправляться в 10:00 утра. Отписка *418*0#', 0)
             else:
                 self.cursor.execute(sql_update, {
                     'mailing_id': mailing_id,
@@ -415,7 +415,7 @@ class dbSMSTask(object):
 
         sql3 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24 hour, '%%e %%b')
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, DATE_FORMAT(date(CONVERT_TZ(NOW(), @@session.time_zone, '+08:00'))+interval 24 hour, '%%e %%b'), w.pressure-40
             from
                 sender_weathertext w, sender_mailing m
             where
@@ -457,7 +457,7 @@ class dbSMSTask(object):
             self.cursor.execute(sql3, { 'mailing_id': mailing_id, })
             row = self.cursor.fetchone()
             self.connection.commit()
-            name, condition, wind_direction, wind_speed, date = row
+            name, condition, wind_direction, wind_speed, date, pressure = row
 
             self.cursor.execute(sql4, { 'mailing_id': mailing_id, })
             row = self.cursor.fetchone()
@@ -467,7 +467,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         #if min_t0 and min_t1 and max_t0 and max_t1:
-        return u'%s. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s, %s. Погода сейчас - звони *818#' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, min_t1, max_t1, self.night_replace(condition1))
+        return u'%s. Завтра, %s: %s %s, %s, ветер %s %s м/c, давл. %dмм. Сегодня ночью: %s %s, %s.' % (name, date, min_t0, max_t0, condition, wind_direction, wind_speed, pressure, min_t1, max_t1, self.night_replace(condition1))
         #return u''
 
     def night_replace(self, condition):
@@ -516,7 +516,7 @@ class dbSMSTask(object):
 
         sql3 = '''
             select 
-                m.name, w.wcondition, w.wind_direction, w.wind_speed
+                m.name, w.wcondition, w.wind_direction, w.wind_speed, w.pressure-40
             from
                 sender_weathertext w, sender_mailing m
             where
@@ -567,7 +567,7 @@ class dbSMSTask(object):
             self.cursor.execute(sql3, { 'mailing_id': mailing_id, })
             row = self.cursor.fetchone()
             self.connection.commit()
-            name, condition, wind_direction, wind_speed = row
+            name, condition, wind_direction, wind_speed, pressure = row
 
             self.cursor.execute(sql4, { 'mailing_id': mailing_id, })
             row = self.cursor.fetchone()
@@ -577,7 +577,7 @@ class dbSMSTask(object):
             #self.raise_error(e)
             return u''
         #if min_t0 and min_t1 and min_t2 and max_t0 and max_t1 and max_t2:
-        return u'%s. Сегодня днем, %s %s, %s, ветер %s %s м/c. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s. Погода сейчас - звони *818#' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
+        return u'%s. Днем, %s %s, %s, ветер %s %s м/c, давл. %dмм. Завтра, %s: %s %s, %s, ветер %s %s м/c. Сегодня ночью: %s %s.' % (name, min_t0, max_t0, condition, wind_direction, wind_speed, pressure, date1, min_t1, max_t1, condition1, wind_direction1, wind_speed1, min_t2, max_t2)
         #return u''
 
     def get_weather_subscribers(self):
@@ -671,7 +671,7 @@ class dbSMSTask(object):
             from
                 sender_smstask
             where
-                in_text like '*818%%'
+                in_text like '*418%%'
                 and delivery_date > now()-interval 30 minute
         '''
         try:

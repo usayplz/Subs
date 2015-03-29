@@ -16,7 +16,7 @@ from local_settings import DATABASES
 
 
 class SMPP(object):
-    ESME_NUM = '*8181#'
+    ESME_NUM = '*418#'
     SOURCE_ADDR_TON = AddrTon.UNKNOWN
     SOURCE_ADDR_NPI = AddrNpi.ISDN
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
@@ -64,11 +64,19 @@ class SMPP(object):
 
                 # set time
                 if len(short_message) > 6:
+                    if short_message in (u'*818*0#', u'*8181*0#', u'*418*0#', u'*4181*0#'):
+                        self.logger.info('Unsubscribe (mobnum): %s' % (source_addr))
+                        sms_text = u'Вы отписались от рассылки'
+                        self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
+                        task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
+                        self.smstask.unsubscribe(source_addr)
+                        return 
+
                     set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
                     if set_time_result != '':
                         sms_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
                     else:
-                        sms_text = u'Неверный формат времени. Пример установки на 19:30 - *818*1930#'
+                        sms_text = u'Неверный формат времени. Пример установки на 19:30 - *418*1930#'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('Set time (mobnum, text): %s, %s' % (source_addr, text))
                     task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
@@ -89,7 +97,7 @@ class SMPP(object):
                     self.logger.info('ERROR: cannot get weather (mobnum, text): %s, %s' % (source_addr, weather))
                     task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)
                 else:
-                    sms_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
+                    sms_text = u'Нас. пункт не определен. Отправьте смс с названием на 4181.'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
                     task_id = self.smstask.add_new_task(source_addr, short_message, sms_text, 1)

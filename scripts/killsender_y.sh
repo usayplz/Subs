@@ -1,0 +1,1 @@
+pkill -9 -f sender_y

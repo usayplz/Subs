@@ -17,7 +17,7 @@ from local_settings import DATABASES
 
 
 class SMPP(object):
-    ESME_NUM = '8181'
+    ESME_NUM = '4181'
     SOURCE_ADDR_TON = AddrTon.UNKNOWN
     SOURCE_ADDR_NPI = AddrNpi.ISDN
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
@@ -34,7 +34,7 @@ class SMPP(object):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(5)
+            self.lc_send_all.start(3)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
@@ -82,7 +82,7 @@ class SMPP(object):
                         self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     else:
-                        out_text = u'Нас. пункт не определен. Отправьте смс с названием на 8181.'
+                        out_text = u'Нас. пункт не определен. Отправьте смс с названием на 4181.'
                         task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
                         self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
@@ -138,7 +138,7 @@ class SMPP(object):
             self.smstask.update_task(-1, task_id, '', -1)
             from_num = self.ESME_NUM
             if in_text == u'help':
-                from_num = '8180'
+                from_num = '4181'
 
             if out_text:
                 d = self.send_sms(self.smpp, mobnum, out_text, from_num)
