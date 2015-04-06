@@ -23,9 +23,9 @@ class SMPP(object):
     SOURCE_ADDR_TON = AddrTon.ALPHANUMERIC
     SOURCE_ADDR_NPI = AddrNpi.UNKNOWN
 
-    #ESME_NUM = '8181'
-    #SOURCE_ADDR_TON = AddrTon.UNKNOWN
-    #SOURCE_ADDR_NPI = AddrNpi.ISDN
+    ESME_NUM = '4181'
+    SOURCE_ADDR_TON = AddrTon.UNKNOWN
+    SOURCE_ADDR_NPI = AddrNpi.ISDN
 
 
     DEST_ADDR_TON = AddrTon.INTERNATIONAL
@@ -42,9 +42,9 @@ class SMPP(object):
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-            self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(5)
-            # self.send_sms(self.smpp, '79021702030', u'omaho').addBoth(self.message_sent)
+            #self.lc_send_all = task.LoopingCall(self.send_all)
+            #self.lc_send_all.start(5)
+            self.send_sms(self.smpp, '79025114117', u'omaho').addBoth(self.message_sent)
             #self.send_city()
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
@@ -113,7 +113,8 @@ class SMPP(object):
         submit_pdu = SubmitSM(
             source_addr=from_num,
             destination_addr=source_addr,
-            message_payload=short_message,
+            #message_payload=short_message,
+            #short_message=short_message,
             source_addr_ton=self.SOURCE_ADDR_TON,
             source_addr_npi=self.SOURCE_ADDR_NPI,
             dest_addr_ton=self.DEST_ADDR_TON,
@@ -135,7 +136,7 @@ class SMPP(object):
         else:
             # self.smstask.update_task(-1, task_id, '', -1)
             self.logger.info('Error send')
-            #self.logger.info(instance)
+            self.logger.info(instance)
 
 
 def critical(msg, *args, **kwargs):
@@ -145,7 +146,7 @@ def critical(msg, *args, **kwargs):
 
 if __name__ == '__main__':
     # check pid
-    PID = 'sender_y.pid'
+    PID = 'sender_test.pid'
     if pid.check_pid(int(pid.read_pid(PID))):
         print "Already running %s" % (PID,)
         exit(0)
@@ -153,9 +154,9 @@ if __name__ == '__main__':
         pid.write_pid(PID)
 
     # logger
-    log_file = 'sender_y.log'
+    log_file = 'sender_test.log'
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="%(asctime)-15s %(levelname)s %(message)s",
         filename=log_file
     )
@@ -166,6 +167,7 @@ if __name__ == '__main__':
     logger.info('[START PROGRAM]')
     db_config = DATABASES['default']
     smpp_config = SMPPClientConfig(
-        host='81.18.113.146', port=3204, username='amstudio2', password='Yrj39sVa', enquireLinkTimerSecs=120, responseTimerSecs=300, )
+        host='212.220.125.230', port=4000, username='amstudio', password='6t11b9ou', enquireLinkTimerSecs=120, responseTimerSecs=300, )
+        # host='212.220.125.230', port=4000, username='amstudio_ussd', password='g2yepu5s', enquireLinkTimerSecs=120, responseTimerSecs=300, )
     SMPP(smpp_config, db_config, logger).run()
     reactor.run()
