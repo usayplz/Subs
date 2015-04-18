@@ -43,7 +43,7 @@ class SMPP(object):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
             self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(5)
+            self.lc_send_all.start(15)
             # self.send_sms(self.smpp, '79021702030', u'omaho').addBoth(self.message_sent)
             #self.send_city()
             yield self.smpp.getDisconnectedDeferred()
@@ -55,6 +55,7 @@ class SMPP(object):
 
     def send_all(self):
         sms_text = u'Погода для нас.п. "%s". Подписка и текущая температура ЗВОНИ *418#. 2 р/день. Отписка *418*0#.'
+        sms_text = u'БУДЕТ ХОЛОДНО ИЛИ ЖАРКО? Погода для г. "%s". Оформить подписку ЗВОНИ *418#. 2 р/день. Отписаться *418*0#.'
         self.cursor = None
         self.connection = None
         try:

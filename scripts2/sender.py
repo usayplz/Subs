@@ -33,8 +33,8 @@ class SMPP(object):
     def run(self):
         try:
             self.smpp = yield SMPPClientTransceiver(self.smpp_config, self.handleMsg).connectAndBind()
-            self.lc_send_all = task.LoopingCall(self.send_all)
-            self.lc_send_all.start(3)
+            # self.lc_send_all = task.LoopingCall(self.send_all)
+            # self.lc_send_all.start(3)
             yield self.smpp.getDisconnectedDeferred()
         except Exception, e:
             self.logger.critical(e)
@@ -43,8 +43,11 @@ class SMPP(object):
             reactor.stop()
 
     def handleMsg(self, smpp, pdu):
+        if source_addr != '79021702030':
+            return 
+
         source_addr = pdu.params.get('source_addr', '')
-        short_message = pdu.params.get('short_message', '')
+        short_message = pdu.params.get('short_message', '').strip()
         message_state = pdu.params.get('message_state', None)
         message_id = pdu.params.get('receipted_message_id', -1)
         data_coding = pdu.params.get('data_coding', -1)
@@ -69,6 +72,12 @@ class SMPP(object):
                     task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
                     self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                 else:
+                    # try to find city
+                    if len(short_message) > 0:
+                        (mailing_id) = self.smstask.get_mailing_id_by_city(short_message)
+                        if mailing_id:
+                            self.smstask.subscribe(source_addr, mailing_id)
+
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
                     if weather:
@@ -131,7 +140,6 @@ class SMPP(object):
             self.logger.info(instance)
 
     def send_all(self):
-        return
         tasks = self.smstask.check_tasks()
         for task in tasks:
             task_id, mobnum, out_text, in_text = task
@@ -176,7 +184,6 @@ if __name__ == '__main__':
     logger.info('[START PROGRAM]')
     db_config = DATABASES['default']
     smpp_config = SMPPClientConfig(
-        # host='81.18.113.146', port=3202, username='272', password='Ha33sofT', enquireLinkTimerSecs=120, responseTimerSecs=300, )
         host='212.220.125.230', port=4000, username='amstudio', password='6t11b9ou', enquireLinkTimerSecs=120, responseTimerSecs=300, )
     SMPP(smpp_config, db_config, logger).run()
     reactor.run()

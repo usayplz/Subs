@@ -440,6 +440,7 @@ ussd_service_op_name_map = {
     'PSSR_RESPONSE': 0x11,
     'USSR_CONFIRM': 0x12,
     'USSN_CONFIRM': 0x13,
+    'TELE2': 0x23,
 }
 ussd_service_op_value_map = dict([(val, key) for (key, val) in ussd_service_op_name_map.items()])
 

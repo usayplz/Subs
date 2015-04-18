@@ -7,7 +7,6 @@ import logging
 import time
 import datetime
 from bwc_city import BWCCity
-from yandex_weather import YandexWeather
 from yrno_weather import yrnoWeather
 from mail import send_mail
 
@@ -246,6 +245,26 @@ class dbSMSTask(object):
         except db.Error, e:
             self.raise_error(e)
 
+    def get_mailing_id_by_city(self, city):
+        sql = '''
+            select
+                id
+            from
+                sender_mailing
+            where
+                name = %(name)s
+            limit 1
+        '''
+        try:
+            self.cursor.execute(sql_bwc_code, { "name": city, })
+            row = self.cursor.fetchone()
+            self.connection.commit()
+            if row:
+                return row[0]
+        except db.Error, e:
+            self.raise_error(e)
+        return None
+
     def get_mailing_id_ussd(self, mobnum):
         sql_mailing_id = '''
             select
@@ -286,6 +305,9 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def subscribe(self, mobnum, mailing_id):
+        if not mailing_id or not mobnum:
+            return 0
+
         sql_select = '''
             select count(*) from sender_subscriber where mobnum = %(mobnum)s and status = 0
         '''
