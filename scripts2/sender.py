@@ -43,9 +43,6 @@ class SMPP(object):
             reactor.stop()
 
     def handleMsg(self, smpp, pdu):
-        if source_addr != '79021702030':
-            return 
-
         source_addr = pdu.params.get('source_addr', '')
         short_message = pdu.params.get('short_message', '').strip()
         message_state = pdu.params.get('message_state', None)
@@ -69,31 +66,32 @@ class SMPP(object):
                 if re.findall(u"стоп|stop|off|-pogoda|-погода", short_message.lower(), re.UNICODE):
                     self.smstask.unsubscribe(source_addr)
                     out_text = u'Вы отписаны от ежедневной погоды. Спасибо за использование сервиса.'
-                    task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
-                    self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
+                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
+                    #self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                 else:
                     # try to find city
                     if len(short_message) > 0:
                         (mailing_id) = self.smstask.get_mailing_id_by_city(short_message)
                         if mailing_id:
                             self.smstask.subscribe(source_addr, mailing_id)
+                            self.logger.info('FIND CITY (mobnum, mailing_id) = (%s, %s)' % (source_addr, mailing_id))
 
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
                     if weather:
-                        task_id = self.smstask.add_new_task(source_addr, short_message, weather, 1)
-                        self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
+                        task_id = self.smstask.add_new_task(source_addr, '###'+short_message, weather, 1)
+                        #self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
                         self.smstask.subscribe(source_addr, mailing_id)
                         self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     elif mailing_id:
                         out_text = u'Для Вашего нас. пункта нет погоды.'
-                        task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
-                        self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
+                        task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
+                        #self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     else:
                         out_text = u'Нас. пункт не определен. Отправьте смс с названием на 4181.'
-                        task_id = self.smstask.add_new_task(source_addr, short_message, out_text, 1)
-                        self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
+                        task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
+                        #self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
                         self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
 
             elif message_state == MessageState.DELIVERED:

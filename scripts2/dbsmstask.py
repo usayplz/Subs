@@ -252,18 +252,17 @@ class dbSMSTask(object):
             from
                 sender_mailing
             where
-                name = %(name)s
+                 lower(%(name)s) like concat('%%', lower(name), '%%')
             limit 1
         '''
         try:
-            self.cursor.execute(sql_bwc_code, { "name": city, })
+            self.cursor.execute(sql, { "name": city, })
             row = self.cursor.fetchone()
             self.connection.commit()
             if row:
                 return row[0]
         except db.Error, e:
-            self.raise_error(e)
-        return None
+            return None
 
     def get_mailing_id_ussd(self, mobnum):
         sql_mailing_id = '''
@@ -338,7 +337,7 @@ class dbSMSTask(object):
                     'mailing_id': mailing_id,
                 })
                 # send help
-                self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 418. Прогноз доставляется в 20:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *418*10# - погода будет отправляться в 10:00 утра. Отписка *418*0#. Стоимость 2р/день.', 0)
+                #self.add_new_task(mobnum, u'help', u'Вы подписались на погоду 418. Прогноз доставляется в 20:30 ежедневно. Устанавливайте любое время доставки. Например: при наборе *418*10# - погода будет отправляться в 10:00 утра. Отписка *418*0#. Стоимость 2р/день.', 0)
             else:
                 self.cursor.execute(sql_update, {
                     'mailing_id': mailing_id,
@@ -793,11 +792,7 @@ def test():
     logger = logging.getLogger(__name__)
 
     tasker = dbSMSTask(db_config, logger)
-
-    requests = tasker.check_tasks()
-    for request in requests:
-        id, mobnum, p1, p2 = request
-        print mobnum
+    print tasker.get_mailing_id_by_city('погода братск')
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
