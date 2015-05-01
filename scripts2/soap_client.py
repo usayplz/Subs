@@ -33,11 +33,11 @@ class RTSoapClient(object):
             return result
         except WebFault, err:
             # self.logger.info(unicode(err))
-            print unicode(err)
+            #print unicode(err)
             pass
         except:
             pass
-            print str(sys.exc_info()[1])
+            #print str(sys.exc_info()[1])
             # self.logger.info('Other error: ' + str(sys.exc_info()[1]))
         return -1
 
@@ -94,8 +94,8 @@ if __name__ == '__main__':
     #print client.api.service.updateUnit(units)
 
     contract = {
-        'requestID': 1,
-        'userNumber': '79025114117',
+        'requestID': 2,
+        'userNumber': '7901702030',
         'unitID': 1,
         'mode': 1,
         'price': 2,
@@ -114,14 +114,16 @@ if __name__ == '__main__':
         # 6= IVR-запрос абонента
         # 7= Заполненная письменная форма 8 = Pin код
     # print client.request('requestContract', contract)
-    # print client.api.service.requestContract(1, '79025114117', 1, 1, 2, '', { 'type': 2, 'number': '4181', 'message': '*418#', })
+    #print client.api.service.requestContract(6, '79025114117', 1, 1, 2, '', { 'type': 1, 'number': '4181', 'message': '414', })
 
     contracts = {
-        'contractID': 1,
+        'contractID': 60346,
         'state': 1, # 1=Контракт продолжается. 2=Контракт прекращается. 3=Контракт заблокирован.
         # 'price': 2,
         # 'parameters': '',
         # 'reason': '',
     }
     # print client.request('modifyContract', units)
-    # print client.request('contractState', 1)
+    #print client.api.service.modifyContract(59501, 2, 2, '', { 'type': 2, 'number': '4181', 'message': 'stop', })
+    #print client.api.service.contractState(60349)
+    print client.request('contractState', { "contractID": 61798 })

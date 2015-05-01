@@ -1,0 +1,244 @@
+<definitions xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="urn:services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:services">
+<types>
+<xsd:schema targetNamespace="urn:services">
+<xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+<xsd:import namespace="http://schemas.xmlsoap.org/wsdl/"/>
+<xsd:complexType name="tFolder">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="1" name="folderID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="parentID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="name" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="deleted" type="xsd:boolean"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="adult" type="xsd:boolean"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="index" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tFolders">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="unbounded" name="folder" type="tns:tFolder"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tUnit">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="1" name="unitID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="unbounded" name="parentID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="kind" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="name" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="author" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="brief" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="info" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="imageURL" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="previewURL" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="tags" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="important" type="xsd:boolean"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="pack" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="index" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="price" type="xsd:decimal"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="serviceType" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="period" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="trial" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="creditPeriod" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="duration" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="sendingTime" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="weekDays" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="onum" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="code" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="conditions" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="mode" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="models" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="parameters" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tUnits">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="unbounded" name="unit" type="tns:tUnit"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tReason">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="1" name="type" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="number" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="message" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tContractState">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="1" name="status" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="contractID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="regionID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="error" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tContracts">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="unbounded" name="contractID" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tContract">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="1" name="contractID" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="state" type="xsd:int"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="debt" type="xsd:decimal"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="lastPaid" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="lastSent" type="xsd:string"/>
+<xsd:element minOccurs="0" maxOccurs="1" name="paidTill" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="tContractsState">
+<xsd:sequence>
+<xsd:element minOccurs="0" maxOccurs="unbounded" name="contracts" type="tns:tContract"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:schema>
+</types>
+<message name="updateFolderRequest">
+<part name="folders" type="tns:tFolders"/>
+</message>
+<message name="updateFolderResponse">
+<part name="return" type="xsd:string"/>
+</message>
+<message name="updateUnitRequest">
+<part name="units" type="tns:tUnits"/>
+</message>
+<message name="updateUnitResponse">
+<part name="return" type="xsd:string"/>
+</message>
+<message name="requestContractRequest">
+<part name="requestID" type="xsd:int"/>
+<part name="userNumber" type="xsd:string"/>
+<part name="unitID" type="xsd:int"/>
+<part name="mode" type="xsd:int"/>
+<part name="price" type="xsd:decimal"/>
+<part name="parameters" type="xsd:string"/>
+<part name="reason" type="tns:tReason"/>
+</message>
+<message name="requestContractResponse">
+<part name="return" type="tns:tContractState"/>
+</message>
+<message name="modifyContractRequest">
+<part name="contractID" type="xsd:int"/>
+<part name="state" type="xsd:string"/>
+<part name="price" type="xsd:decimal"/>
+<part name="parameters" type="xsd:string"/>
+<part name="reason" type="tns:tReason"/>
+</message>
+<message name="modifyContractResponse">
+<part name="return" type="xsd:string"/>
+</message>
+<message name="chargeRequest">
+<part name="chargeID" type="xsd:int"/>
+<part name="operation" type="xsd:int"/>
+<part name="contractID" type="xsd:int"/>
+<part name="userNumber" type="xsd:string"/>
+<part name="total" type="xsd:decimal"/>
+</message>
+<message name="chargeResponse">
+<part name="return" type="xsd:int"/>
+</message>
+<message name="contractStateRequest">
+<part name="contracts" type="tns:tContracts"/>
+</message>
+<message name="contractStateResponse">
+<part name="return" type="tns:tContractsState"/>
+</message>
+<portType name="servicesPortType">
+<operation name="updateFolder">
+<documentation>
+Для создания, изменения или удаления раздела провайдером
+</documentation>
+<input message="tns:updateFolderRequest"/>
+<output message="tns:updateFolderResponse"/>
+</operation>
+<operation name="updateUnit">
+<documentation>
+Для создания, изменения или удаления раздела провайдером
+</documentation>
+<input message="tns:updateUnitRequest"/>
+<output message="tns:updateUnitResponse"/>
+</operation>
+<operation name="requestContract">
+<documentation>Для создания контракта провайдером</documentation>
+<input message="tns:requestContractRequest"/>
+<output message="tns:requestContractResponse"/>
+</operation>
+<operation name="modifyContract">
+<documentation>Провайдер может изменить или закрыть контракт</documentation>
+<input message="tns:modifyContractRequest"/>
+<output message="tns:modifyContractResponse"/>
+</operation>
+<operation name="charge">
+<documentation>
+Провайдер выполняет тарификацию услуг путём вызова метода charge. Тарификация возможна только в рамках действующего контракта и при соответствующем значении режима оплаты контракта mode. Размер суммарных списаний по контракту в любом случае не должен превышать заявленную цену контракта
+</documentation>
+<input message="tns:chargeRequest"/>
+<output message="tns:chargeResponse"/>
+</operation>
+<operation name="contractState">
+<documentation>Проверка статуса контракта</documentation>
+<input message="tns:contractStateRequest"/>
+<output message="tns:contractStateResponse"/>
+</operation>
+</portType>
+<binding name="servicesBinding" type="tns:servicesPortType">
+<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+<operation name="updateFolder">
+<soap:operation soapAction="urn:services#updateFolder" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+<operation name="updateUnit">
+<soap:operation soapAction="urn:services#updateUnit" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+<operation name="requestContract">
+<soap:operation soapAction="urn:services#requestContract" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+<operation name="modifyContract">
+<soap:operation soapAction="urn:services#modifyContract" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+<operation name="charge">
+<soap:operation soapAction="urn:services#charge" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+<operation name="contractState">
+<soap:operation soapAction="urn:services#contractState" style="rpc"/>
+<input>
+<soap:body use="literal" namespace="urn:services"/>
+</input>
+<output>
+<soap:body use="literal" namespace="urn:services"/>
+</output>
+</operation>
+</binding>
+<service name="services">
+<port name="servicesPort" binding="tns:servicesBinding">
+<soap:address location="http://api.rostelecontent.ru/server.services.php"/>
+</port>
+</service>
+</definitions>
