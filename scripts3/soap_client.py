@@ -40,15 +40,11 @@ class RTSoapClient(object):
 
 
 if __name__ == '__main__':
-    a = (u'Город %s привет' % (u'hi'))[0:10]
-    print a
-    sys.exit()
-
     client = RTSoapClient(dict(username='amstudio', password='JHMaNf5S'))
-    # result = client.api.service.requestContract(8, '79021702030', 1, 1, 2, '', { 'type': 1, 'number': '4181', 'message': '414', })
-    # print result.status
+    # print client.api.service.requestContract(5, '79021702030', 1, 1, 2, '', { 'type': 1, 'number': '4181', 'message': '414', })
+    #print client.api.service.requestContract(46, '79025114117', 1, 1, 2, '', { 'type': 1, 'number': '4181', 'message': '414', })
     # 1=Контракт продолжается. 2=Контракт прекращается. 3=Контракт заблокирован.
-    # print client.api.service.modifyContract(60349, 2, 2, '', { 'type': 2, 'number': '4181', 'message': 'stop', })
+    #print client.api.service.modifyContract(64626, 2, 2, '', { 'type': 2, 'number': '4181', 'message': 'stop', })
     #print client.api.service.contractState(60349)
-    # print client.request('contractState', { "contractID": 60349 })
+    print client.request('contractState', { "contractID": 80137 })
 

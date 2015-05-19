@@ -358,8 +358,19 @@ class dbSMSTask(object):
             where
                 status = 0
                 and delivery_date <= NOW()
-            limit 15
+            limit 10
+
         '''
+        #             )
+        #     union
+        #     (select
+        #         id, mobnum, out_text, in_text
+        #     from
+        #         sw_smstask
+        #     where
+        #         status = 0
+        #         and delivery_date <= NOW()            
+        #     limit 10)
         try:
             self.cursor.execute(sql, {})
             self.connection.commit() # or will be use a cache

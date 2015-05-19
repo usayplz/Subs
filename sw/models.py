@@ -107,8 +107,8 @@ class SMSTaskLog(models.Model):
 
     class Meta:
         ordering = ['-delivery_date']
-        verbose_name = _(u'Очередь сообщений')
-        verbose_name_plural = _(u'Очередь сообщений')
+        verbose_name = _(u'Log очереди сообщений')
+        verbose_name_plural = _(u'Log очереди сообщений')
 
 
 # Тексты

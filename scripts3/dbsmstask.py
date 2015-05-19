@@ -202,7 +202,6 @@ class dbSMSTask(object):
                 self.connection.commit()
                 if row:
                     name, weather = row
-
                     self.cursor.execute(sql1, { 'mailing_id': mailing_id, })
                     row = self.cursor.fetchone()
                     self.connection.commit()
@@ -213,7 +212,7 @@ class dbSMSTask(object):
                         max_t1 = ''
 
                     if weather:
-                        return mailing_id, (u'%s: %s. Завтра Д %s Н %s' % (name[0:10], weather, max_t1))[0:70]
+                        return mailing_id, (u'%s: %s. Завтра Д %s Н %s' % (name[0:10], weather, max_t1, min_t1))[0:70]
                 return mailing_id, None
             else:
                 return (None, None)
@@ -269,7 +268,7 @@ class dbSMSTask(object):
         return RTSoapClient(dict(username='amstudio', password='JHMaNf5S'))
 
     def is_rtsubscribe(self, mobnum):
-        # Returns: > 0 - subscribe, 0 - not subscribe
+        # Returns: contractID, state == 1 - subscribe, > 1 - not subscribe
         sql = '''
             select
                 contract_id, contract_state
@@ -279,6 +278,17 @@ class dbSMSTask(object):
                 mobnum = %(mobnum)s
                 and status = 0
         '''
+
+        sql_update_contract = '''
+            update
+                sw_subscriber
+            set
+                contract_id = %(contract_id)s,
+                contract_state = %(contract_state)s
+            where
+                mobnum = %(mobnum)s
+        '''
+
         try:
             self.cursor.execute(sql, { "mobnum": mobnum, })
             row = self.cursor.fetchone()
@@ -289,8 +299,10 @@ class dbSMSTask(object):
                     client = self.rt_connect()
                     contract = client.request('contractState', { "contractID": contract_id })
                     if contract:
-                        for c in result.contracts:
+                        for c in contract.contracts:
                             if c.contractID == contract_id:
+                                self.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": c.contractID, "contract_state": c.state, })
+                                self.connection.commit()
                                 return c.contractID, c.state
             return 0, 0
         except db.Error, e:
@@ -348,7 +360,7 @@ class dbSMSTask(object):
             result = client.api.service.requestContract(request_id, mobnum, 1, 1, 2, '', { 'type': typ, 'number': number, 'message': message, })
 
             if result:
-                self.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": contract_id, "contract_state": contract_state, })
+                self.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": result.contractID, "contract_state": 1, })
                 self.connection.commit()
                 return result.contractID, result.status
             return 0
@@ -366,6 +378,7 @@ class dbSMSTask(object):
                 mobnum = %(mobnum)s
         '''
 
+        client = self.rt_connect()
         contract_id, contract_state = self.is_rtsubscribe(mobnum)
         if contract_id > 0:
             result = client.api.service.modifyContract(contract_id, 2, 2, '', { 'type': 1, 'number': '4181', 'message': 'stop', })
@@ -380,22 +393,35 @@ class dbSMSTask(object):
 
 
     def is_subscribe(self, mobnum):
-        # Returns: 1 - subscribe, 0 - not subscribe
+        # Returns: 1 - subscribe, 0 - not subscribe, -1 - was subs
         sql_subscribe = '''
             select count(*) from sw_subscriber where mobnum = %(mobnum)s and status = 0
+        '''
+
+        sql_subscribe_0 = '''
+            select count(*) from sw_subscriber where mobnum = %(mobnum)s
         '''
         try:
             self.cursor.execute(sql_subscribe, { "mobnum": mobnum, })
             row = self.cursor.fetchone()
             self.connection.commit()
             if row[0] > 0:
+                self.cursor.execute(sql_subscribe, { "mobnum": mobnum, })
+                row = self.cursor.fetchone()
+                self.connection.commit()
                 return 1
             else:
-                return 0
+                self.cursor.execute(sql_subscribe_0, { "mobnum": mobnum, })
+                row = self.cursor.fetchone()
+                self.connection.commit()
+                if row[0] > 0:
+                    return -1 # exist
+                else:
+                    return 0
         except db.Error, e:
             self.raise_error(e)
 
-    def subscribe(self, mobnum, mailing_id):
+    def subscribe(self, mobnum, mailing_id, typ, message):
         if not mailing_id or not mobnum:
             return 0
 
@@ -410,22 +436,35 @@ class dbSMSTask(object):
             update
                 sw_subscriber
             set
-                mailing_id = %(mailing_id)s
+                mailing_id = %(mailing_id)s,
+                status = 0
             where
                 mobnum = %(mobnum)s
         '''
         try:
-            if self.is_subscribe(mobnum) == 0:
-                self.cursor.execute(sql_insert, {
-                    'mobnum': mobnum,
-                    'mailing_id': mailing_id,
-                })
+            is_subscribe = self.is_subscribe(mobnum)
+            contract_id, contract_state = self.is_rtsubscribe(mobnum)
+            if is_subscribe <= 0 or contract_state != 1:
+                if is_subscribe == 0:
+                    self.cursor.execute(sql_insert, {
+                        'mobnum': mobnum,
+                        'mailing_id': mailing_id,
+                    })
+                
+                if is_subscribe < 0:
+                    self.cursor.execute(sql_update, {
+                        'mobnum': mobnum,
+                        'mailing_id': mailing_id,
+                    })
+
                 # send help
-                self.add_new_task(mobnum, u'help', u'Оформлена подпика на прогноз погоды. Доставка в 20:30 ежедневно. Смена времяни отправки *418*10#. Отписка 418*0#. Стоимость 2р/день.', 0)
+                self.register_rtcontract(mobnum, typ, message)
+                self.add_new_task(mobnum, u'help', u'Оформлена подписка на прогноз погоды. Доставка в 20:30 ежедневно. Смена времени отправки *418*время#. Отписка *418*0#. Стоимость 2р/день', 0)
+                return 2
             else:
                 self.cursor.execute(sql_update, {
-                    'mailing_id': mailing_id,
                     'mobnum': mobnum,
+                    'mailing_id': mailing_id,
                 })
 
             self.connection.commit()
@@ -474,6 +513,25 @@ class dbSMSTask(object):
             return []
 
         return self.cursor.fetchall()
+
+    def check_spam(self, mobnum):
+        sql = '''
+            select 
+                count(*) 
+            from 
+                sw_smstask 
+            where 
+                mobnum = %(mobnum)s
+                and delivery_date > NOW()-interval 1 day
+        '''
+        try:
+            self.cursor.execute(sql, { 'mobnum': mobnum, })
+            self.connection.commit() # or will be use a cache
+            row = self.cursor.fetchone()
+        except db.Error, e:
+            self.raise_error(e)
+            return 0
+        return row[0]
 
     def raise_error(self, error):
         self.connection_state = 0
@@ -553,7 +611,7 @@ class dbSMSTask(object):
             name1, condition1, wind_direction1, wind_speed1 = row
         except db.Error, e:
             return u''
-        return (u'%s %s: %s, Д %s Н %s, %s ветер %sм/с, %s' % (name[0:10], date, condition, max_t0, min_t1, wind_direction, wind_speed, pressure))[0:70]
+        return (u'%s %s: %s, Д %s Н %s, %s ветер %sм/с, %d' % (name[0:10], date, condition, max_t0, min_t1, wind_direction, wind_speed, pressure))[0:70]
 
     def night_replace(self, condition):
         condition = condition.replace(u'солнечно', u'безоблачно')
@@ -660,7 +718,7 @@ class dbSMSTask(object):
             name1, condition1, wind_direction1, wind_speed1, date1 = row
         except db.Error, e:
             return u''
-        return (u'%s %s: %s, %s, ветер %s %sм/с, %sмм. %s: %s' % (name[0:10], date0, condition, max_t0, wind_direction, wind_speed, pressure, date1, max_t1))[0:70]
+        return (u'%s %s: %s, %s, ветер %s %sм/с, %dмм. %s: %s' % (name[0:10], date0, condition, max_t0, wind_direction, wind_speed, pressure, date1, max_t1))[0:70]
 
     def get_weather_subscribers(self):
         sql = '''
@@ -703,10 +761,46 @@ class dbSMSTask(object):
 
     def clear_weather_texts(self):
         sql = '''
-            delete from sw_weathertext where create_date < date_sub(NOW(), interval 7 day)
+            delete from sw_weathertext where create_date < date_sub(NOW(), interval 2 day)
         '''
         try:
             self.cursor.execute(sql, {})
+            self.connection.commit()
+        except db.Error, e:
+            self.raise_error(e)
+
+    def refill_log(self):
+        sql_select = '''
+            select id, mobnum, in_text, out_text, delivery_date, sent_date, status, message_id, error from sw_smstask where delivery_date < NOW() - interval 1 day
+        '''
+
+        sql_from_delete = '''
+            delete from sw_smstask where id = %(id)s
+        '''
+
+        sql_to_insert = '''
+            insert into sw_smstasklog
+                (mobnum, in_text, out_text, delivery_date, sent_date, status, message_id, error)
+            values
+                (%(mobnum)s, %(in_text)s, %(out_text)s, %(delivery_date)s, %(sent_date)s, %(status)s, %(message_id)s, %(error)s)
+        '''
+        try:
+            self.cursor.execute(sql_select, {})
+            rows = self.cursor.fetchall()
+            for row in rows:
+                (id, mobnum, in_text, out_text, delivery_date, sent_date, status, message_id, error) = row
+                self.cursor.execute(sql_to_insert, { 
+                    'mobnum': mobnum, 
+                    'in_text': in_text, 
+                    'out_text': out_text, 
+                    'delivery_date': delivery_date, 
+                    'sent_date': sent_date, 
+                    'status': status, 
+                    'message_id': message_id, 
+                    'error': error, 
+                })
+                self.cursor.execute(sql_from_delete, { 'id': id, })
+
             self.connection.commit()
         except db.Error, e:
             self.raise_error(e)
@@ -807,7 +901,16 @@ def test():
     logger = logging.getLogger(__name__)
 
     tasker = dbSMSTask(db_config, logger)
-    print tasker.get_mailing_id_by_city('погода братск')
+    c = tasker.subscribe('79025791972', 14, 'SMS', '418')
+    print c
+
+
+def refill():
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    tasker = dbSMSTask(db_config, logger)
+    tasker.refill_log()
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
@@ -816,7 +919,11 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'subs':
         subs()
+    elif sys.argv[1] == 'refill':
+        refill()
     elif sys.argv[1] == 'test':
         test()
+    elif sys.argv[1] == 'imports':
+        imports()
     else:
         main()

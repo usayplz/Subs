@@ -124,8 +124,8 @@ class yrnoWeather():
     def _convert_condition_en2ru(self, value):
         value = value.lower()
         dict_enru_wind_direction = {
-            'sun'           :   u'солнечно',
-            'clear sky'     :   u'солнечно',
+            'sun'           :   u'безобл.',
+            'clear sky'     :   u'безобл.',
             'partly cloudy' :   u'перем. обл.',
             'fair'          :   u'ясно',
             'snow'          :   u'снег',
