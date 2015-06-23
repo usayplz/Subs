@@ -86,13 +86,20 @@ class SMPP(object):
                             self.logger.info('FIND CITY (mobnum, mailing_id) = (%s, %s)' % (source_addr, mailing_id))
                             return
 
+                        set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
+                        if set_time_result != '' and self.smstask.is_subscribe(source_addr) == 1:
+                            out_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
+                            task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
+                            self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
+                            return
+
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
                     if weather:
                         if self.smstask.subscribe(source_addr, mailing_id, 'SMS', short_message) != 2:
                             task_id = self.smstask.add_new_task(source_addr, '###'+short_message, weather, 1)
-                            self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)                        
-                        self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                            self.send_sms(smpp, source_addr, weather).addBoth(self.message_sent, task_id)
+                            self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                     elif mailing_id:
                         out_text = u'Для Вашего нас. пункта нет погоды.'
                         task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
@@ -117,10 +124,10 @@ class SMPP(object):
             encoding: UCS2
         """
 
-        (contract_id, state) = self.smstask.is_rtsubscribe(source_addr)
-        if state != 1:
-            self.logger.info('Bad status of contract sms (source_addr, contract_id, contract_state): %s, %s, %s' % (source_addr, contract_id, state))
-            return defer.maybeDeferred(None)
+        # (contract_id, state) = self.smstask.is_rtsubscribe(source_addr)
+        # if state != 1:
+        #     self.logger.info('Bad status of contract sms (source_addr, contract_id, contract_state): %s, %s, %s' % (source_addr, contract_id, state))
+        #     return defer.maybeDeferred(None)
 
         short_message = short_message.encode('utf_16_be')
         if from_num is None:

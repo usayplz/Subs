@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from sw.models import Mailing, Subscriber, SMSTask, WeatherText, SMSTaskLog
+from sw.models import Mailing, Subscriber, SMSTask, WeatherText, SMSTaskLog, LastPayment
 from django.forms import CheckboxSelectMultiple
 from django.db import models
 
@@ -28,7 +28,7 @@ class MailingAdmin(admin.ModelAdmin):
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
-    list_filter = ('status', 'create_date',)
+    list_filter = ('status', 'create_date', 'contract_state',)
     search_fields = ['mobnum', 'request_id', 'contract_id', 'contract_state']
     class Meta:
         model = Subscriber
@@ -61,9 +61,19 @@ class WeatherTextAdmin(admin.ModelAdmin):
         model = WeatherText
 
 
+class LastPaymentAdmin(admin.ModelAdmin):
+    list_display = ('mobnum', 'payment_date',)
+    list_filter = ('payment_date',)
+    search_fields = ['mobnum']
+    list_per_page = 100
+    class Meta:
+        model = LastPayment
+
+
 admin.site.register(Mailing, MailingAdmin)
 admin.site.register(Subscriber, SubscriberAdmin)
 admin.site.register(SMSTask, SMSTaskAdmin)
 admin.site.register(SMSTaskLog, SMSTaskLogAdmin)
 admin.site.register(WeatherText, WeatherTextAdmin)
+admin.site.register(LastPayment, LastPaymentAdmin)
 

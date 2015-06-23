@@ -131,3 +131,17 @@ class WeatherText(models.Model):
         ordering = ['time_from']
         verbose_name = _(u'Погода')
         verbose_name_plural = _(u'Погода')
+
+
+# Last payment
+class LastPayment(models.Model):
+    mobnum = models.CharField(_(u'Мобильный номер'), max_length=12)
+    payment_date = models.DateField(_(u'Дата от'), null=True, blank=True)
+
+    def __unicode__(self):
+        return u'%s - %s' % (self.mobnum, self.payment_date)
+
+    class Meta:
+        ordering = ['payment_date']
+        verbose_name = _(u'Последний платеж')
+        verbose_name_plural = _(u'Последние платежи')

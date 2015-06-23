@@ -69,7 +69,7 @@ class SMPP(object):
                 if not mailing_id:
                     sms_text = u'Вы не подписаны. Подписка - СМС с названием города на 4181.'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
-                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                    task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
                     return
 
                 if short_message == '0':
@@ -77,12 +77,12 @@ class SMPP(object):
                         self.logger.info('Unsubscribe (mobnum): %s' % (source_addr))
                         sms_text = u'Вы отписались от рассылки прогноз погоды 418.'
                         self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
-                        task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                        task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
                         self.smstask.unsubscribe(source_addr)
                     else:                        
                         sms_text = u'Вы не подписаны на рассылку погоды 418.'
                         self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
-                        task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                        task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
                     return
 
                 if len(short_message) > 0:
@@ -93,7 +93,7 @@ class SMPP(object):
                         sms_text = u'Неверный формат времени. Пример установки на 19:30 - *418*1930#'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('Set time (mobnum, text): %s, %s' % (source_addr, sms_text))
-                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                    task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
                     if weather != '':
                         self.smstask.subscribe(source_addr, mailing_id, 'USSD', short_message)
                     return
@@ -101,19 +101,19 @@ class SMPP(object):
                 self.logger.info('mailing_id = %s' % mailing_id)
                 if weather:
                     self.send_ussd(smpp, my_num, source_addr, weather, ussdServiceOp.USSN_REQUEST)
-                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, weather, 1)
+                    task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, weather, 1)
                     self.smstask.subscribe(source_addr, mailing_id, 'USSD', short_message)
                     self.logger.info('new task (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
                 elif mailing_id:
                     sms_text = u'Для Вашего нас. пункта нет погоды.'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('ERROR: cannot get weather (mobnum, text): %s, %s' % (source_addr, weather))
-                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                    task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
                 else:
                     sms_text = u'Нас. пункт не удалось определить. Отправьте смс с названием на 4181.'
                     self.send_ussd(smpp, my_num, source_addr, sms_text, ussdServiceOp.USSN_REQUEST)
                     self.logger.info('ERROR: cannot get city (mobnum, text): %s, %s' % (source_addr, weather))
-                    task_id = self.smstask.add_new_task(source_addr, '###'+short_message, sms_text, 1)
+                    task_id = self.smstask.add_new_task(source_addr, 'ussd###'+short_message, sms_text, 1)
 
     def send_ussd(self, smpp, my_num, source_addr, short_message, _ussd_service_op):
         short_message = short_message.encode('utf_16_be')
