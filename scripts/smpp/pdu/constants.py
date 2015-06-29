@@ -287,7 +287,7 @@ tag_name_map = {
     'alert_on_message_delivery': 0x130C,
     'its_reply_type': 0x1380,
     'its_session_info': 0x1383,
-    'value_3178': 0x3178,
+    #'value_3178': 0x3178,
 }
 
 tag_value_map = dict([(val, key) for (key, val) in tag_name_map.items()])
@@ -440,6 +440,7 @@ ussd_service_op_name_map = {
     'PSSR_RESPONSE': 0x11,
     'USSR_CONFIRM': 0x12,
     'USSN_CONFIRM': 0x13,
+    'TELE2': 0x23,
 }
 ussd_service_op_value_map = dict([(val, key) for (key, val) in ussd_service_op_name_map.items()])
 

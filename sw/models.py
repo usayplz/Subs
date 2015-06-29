@@ -55,6 +55,7 @@ class Subscriber(models.Model):
 # Очередь сообщений
 class SMSTask(models.Model):
     SMS_STATUSES = (
+        (-3, u'был заблокирован'),
         (-2, u'не доставлено'),
         (-1, u'не отправлено'),
         (0, u'не отправлялось'),
@@ -86,6 +87,7 @@ class SMSTask(models.Model):
 # Лог очереди сообщений
 class SMSTaskLog(models.Model):
     SMS_STATUSES = (
+        (-3, u'был заблокирован'),
         (-2, u'не доставлено'),
         (-1, u'не отправлено'),
         (0, u'не отправлялось'),

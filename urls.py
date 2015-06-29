@@ -6,11 +6,11 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^$', 'sender.views.index'),
+    #url(r'^$', 'sender.views.index'),
     url(r'^wsdl$', 'sw.views.wsdl'),
     url(r'^admin_tools/', include('admin_tools.urls')),
     url(r'^admin/', include(admin.site.urls)),
     ('^pages/', include('django.contrib.flatpages.urls')),
 
-    url(r'^rtsoapservice/', 'rtsoapservice.views.rt_soap_service'),
+    #url(r'^rtsoapservice/', 'rtsoapservice.views.rt_soap_service'),
 )

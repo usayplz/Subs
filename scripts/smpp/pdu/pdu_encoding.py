@@ -758,9 +758,9 @@ class OptionEncoder(IEncoder):
             T.sms_signal: OctetStringEncoder(self.getLength),
             T.alert_on_message_delivery: EmptyEncoder(),
             #T.its_reply_type: ItsReplyTypeEncoder(),
-            # T.its_session_info: ItsSessionInfoEncoder(),
+            T.its_session_info: Int2Encoder(), #COctetStringEncoder(1),#ItsSessionInfoEncoder(),
             T.ussd_service_op: UssdServiceOpEncoder(),
-            T.value_3178: Int16Encoder(),
+            #T.value_3178: Int16Encoder(),
         }
 
     def getLength(self):
