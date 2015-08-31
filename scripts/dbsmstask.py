@@ -422,7 +422,7 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def subscribe(self, mobnum, mailing_id, typ, message):
-        if not mailing_id or not mobnum:
+        if not mailing_id or not mobnum or mobnum in ('79500586318'):
             return 0
 
         sql = '''
@@ -918,8 +918,7 @@ def test():
 
     tasker = dbSMSTask(db_config, logger)
     # print tasker.get_today_weather(10)
-    print tasker.unsubscribe('79501495790')
-    #print tasker.unsubscribe('79500950429')
+    print tasker.unsubscribe('79500586318')
     #print tasker.subscribe('79500923584', 258, 'SMS', '4181')
 
 def refill():

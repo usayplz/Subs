@@ -202,6 +202,7 @@ if __name__ == '__main__':
     logger.info('[START PROGRAM]')
     db_config = DATABASES['default']
     smpp_config = SMPPClientConfig(
-        host='212.220.125.230', port=4000, username='amstudio', password='6t11b9ou', responseTimerSecs=300, )
+#        host='212.220.125.230', port=4000, username='amstudio', password='6t11b9ou', responseTimerSecs=300, )
+        host='91.232.133.144', port=3900, username='amstudio', password='6t11b9ou', responseTimerSecs=300, )
     SMPP(smpp_config, db_config, logger).run()
     reactor.run()

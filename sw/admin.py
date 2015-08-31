@@ -3,6 +3,7 @@ from django.contrib import admin
 from sw.models import Mailing, Subscriber, SMSTask, WeatherText, SMSTaskLog, LastPayment
 from django.forms import CheckboxSelectMultiple
 from django.db import models
+from daterange_filter.filter import DateRangeFilter
 
 
 def yarno_url(obj):
@@ -63,7 +64,9 @@ class WeatherTextAdmin(admin.ModelAdmin):
 
 class LastPaymentAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'payment_date',)
-    list_filter = ('payment_date',)
+    list_filter = (
+        ('payment_date', DateRangeFilter), # this is a tuple
+    )
     search_fields = ['mobnum']
     list_per_page = 100
     class Meta:

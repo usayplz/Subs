@@ -96,6 +96,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.flatpages',
     #'sender',
+    'daterange_filter',
     'sw',
 )
 
