@@ -26,11 +26,15 @@ class MailingAdmin(admin.ModelAdmin):
     class Meta:
         model = Mailing
 
+def unsubscribe(modeladmin, request, queryset):
+    for qs in queryset:
+        print qs
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
     list_filter = ('status', 'create_date', 'contract_state',)
     search_fields = ['mobnum', 'request_id', 'contract_id', 'contract_state']
+    actions = [unsubscribe]
     class Meta:
         model = Subscriber
 
