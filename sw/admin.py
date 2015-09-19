@@ -30,27 +30,37 @@ class MailingAdmin(admin.ModelAdmin):
 
 
 # SUBSCRIBERS
-class SubscribeActionForm(ActionForm):
-    phone = forms.CharField(max_length=11, required=False)
-
-def action_subscribe(modeladmin, request, queryset):
-    for qs in queryset:
-        print qs
-action_subscribe.short_description = u'Подписать'
-
-def adction_unsubscribe(modeladmin, request, queryset):
-    for qs in queryset:
-        print qs
-adction_unsubscribe.short_description = u'Отписать'
-
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
     list_filter = ('status', 'create_date', 'contract_state',)
     search_fields = ['mobnum', 'request_id', 'contract_id', 'contract_state']
     action_form = SubscribeActionForm
-    actions = [adction_unsubscribe, action_subscribe]
+    actions = ['adction_unsubscribe', 'action_subscribe']
     class Meta:
         model = Subscriber
+
+    def changelist_view(self, request, extra_context=None):
+        if 'action' in request.POST and request.POST['action'] == 'action_subscribe':
+            if not request.POST.getlist(admin.ACTION_CHECKBOX_NAME):
+                post = request.POST.copy()
+                for u in Subscriber.objects.all():
+                    post.update({admin.ACTION_CHECKBOX_NAME: str(u.id)})
+                request._set_post(post)
+        return super(SubscriberAdmin, self).changelist_view(request, extra_context)
+
+    class SubscribeActionForm(ActionForm):
+        phone = forms.CharField(verbose=u'Номер телефона (11 знаков): ', max_length=11, required=False)
+
+    def action_subscribe(self, request, queryset):
+        for qs in queryset:
+            print qs
+    action_subscribe.short_description = u'Подписать'
+
+    def adction_unsubscribe(self, request, queryset):
+        for qs in queryset:
+            print qs
+    adction_unsubscribe.short_description = u'Отписать'
+
 # END OF SUBSCRIBERS
 
 class SMSTaskAdmin(admin.ModelAdmin):
