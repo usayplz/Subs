@@ -7,6 +7,7 @@ from django import forms
 from django.contrib.admin.helpers import ActionForm
 from daterange_filter.filter import DateRangeFilter
 import sys
+from django.conf import settings
 
 sys.path.append('/var/www/subs/scripts/')
 import dbsmstask
@@ -69,7 +70,7 @@ class SubscriberAdmin(admin.ModelAdmin):
 
     def adction_unsubscribe(self, request, queryset):
         for qs in queryset:
-            tasker = dbsmstask.dbSMSTask(db_config, None)
+            tasker = dbsmstask.dbSMSTask(settings.DATABASES['default'], None)
             tasker.unsubscribe('79021702030')
 
     adction_unsubscribe.short_description = u'Отписать'
