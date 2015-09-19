@@ -63,16 +63,13 @@ class SubscriberAdmin(admin.ModelAdmin):
         mailing = request.POST['mailing']
         if phone and mailing:
             tasker = dbsmstask.dbSMSTask(settings.DATABASES['default'], None)
-            result = tasker.subscribe(phone, mailing, 'SMS', '4181')
-            self.message_user(request, result)
-
+            tasker.subscribe(phone, mailing, 'SMS', '4181')
     action_subscribe.short_description = u'Подписать'
 
     def adction_unsubscribe(self, request, queryset):
         for qs in queryset:
             tasker = dbsmstask.dbSMSTask(settings.DATABASES['default'], None)
             tasker.unsubscribe(qs.mobnum)
-
     adction_unsubscribe.short_description = u'Отписать'
 
 # END OF SUBSCRIBERS
