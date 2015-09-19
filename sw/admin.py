@@ -3,6 +3,8 @@ from django.contrib import admin
 from sw.models import Mailing, Subscriber, SMSTask, WeatherText, SMSTaskLog, LastPayment
 from django.forms import CheckboxSelectMultiple
 from django.db import models
+from django import forms
+from django.contrib.admin.helpers import ActionForm
 from daterange_filter.filter import DateRangeFilter
 
 
@@ -26,18 +28,30 @@ class MailingAdmin(admin.ModelAdmin):
     class Meta:
         model = Mailing
 
-def unsubscribe(modeladmin, request, queryset):
+
+# SUBSCRIBERS
+class SubscribeActionForm(ActionForm):
+    phone = forms.CharField(max_length=11, required=False)
+
+def action_subscribe(modeladmin, request, queryset):
     for qs in queryset:
         print qs
+action_subscribe.short_description = u'Подписать'
+
+def adction_unsubscribe(modeladmin, request, queryset):
+    for qs in queryset:
+        print qs
+adction_unsubscribe.short_description = u'Отписать'
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
     list_filter = ('status', 'create_date', 'contract_state',)
     search_fields = ['mobnum', 'request_id', 'contract_id', 'contract_state']
-    actions = [unsubscribe]
+    action_form = SubscribeActionForm
+    actions = [adction_unsubscribe, action_subscribe]
     class Meta:
         model = Subscriber
-
+# END OF SUBSCRIBERS
 
 class SMSTaskAdmin(admin.ModelAdmin):
     list_display = ('delivery_date', 'mobnum', 'status', 'in_text', 'out_text', 'sent_date',)
