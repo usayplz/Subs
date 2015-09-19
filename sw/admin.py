@@ -37,7 +37,7 @@ class MailingAdmin(admin.ModelAdmin):
 # SUBSCRIBERS
 class SubscribeActionForm(ActionForm):
     phone = forms.CharField(label=u'Номер телефона (11 знаков): ', max_length=11, required=False)
-    mailing = forms.ModelChoiceField(label=u'Рассылка', queryset=Mailing.objects.all())
+    mailing = forms.ModelChoiceField(label=u'Рассылка', queryset=Mailing.objects.all(), required=False)
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
@@ -59,13 +59,12 @@ class SubscriberAdmin(admin.ModelAdmin):
         return super(SubscriberAdmin, self).changelist_view(request, extra_context)
 
     def action_subscribe(self, request, queryset):
-        pass
-        # logging.basicConfig(level=logging.INFO)
-        # logger = logging.getLogger(__name__)
-
-        # tasker = dbsmstask.dbSMSTask(db_config, logger)
-        # print tasker.unsubscribe('79021702030')
-        # print tasker.subscribe('79021702030', 258, 'SMS', '4181')
+        phone = request.POST['phone']
+        mailing = request.POST['mailing']
+        if phone and mailing:
+            tasker = dbsmstask.dbSMSTask(db_config, None)
+            result = tasker.subscribe(phone, mailing, 'SMS', '4181')
+            self.message_user(request, result)
 
     action_subscribe.short_description = u'Подписать'
 
