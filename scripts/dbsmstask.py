@@ -422,7 +422,7 @@ class dbSMSTask(object):
             self.raise_error(e)
 
     def subscribe(self, mobnum, mailing_id, typ, message):
-        if not mailing_id or not mobnum or mobnum in ('79500586318'):
+        if not mailing_id or not mobnum: # or mobnum in ('79500586318'):
             return 0
 
         sql = '''
