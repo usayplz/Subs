@@ -30,6 +30,9 @@ class MailingAdmin(admin.ModelAdmin):
 
 
 # SUBSCRIBERS
+class SubscribeActionForm(ActionForm):
+    phone = forms.CharField(verbose=u'Номер телефона (11 знаков): ', max_length=11, required=False)
+
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
     list_filter = ('status', 'create_date', 'contract_state',)
@@ -47,9 +50,6 @@ class SubscriberAdmin(admin.ModelAdmin):
                     post.update({admin.ACTION_CHECKBOX_NAME: str(u.id)})
                 request._set_post(post)
         return super(SubscriberAdmin, self).changelist_view(request, extra_context)
-
-    class SubscribeActionForm(ActionForm):
-        phone = forms.CharField(verbose=u'Номер телефона (11 знаков): ', max_length=11, required=False)
 
     def action_subscribe(self, request, queryset):
         for qs in queryset:
