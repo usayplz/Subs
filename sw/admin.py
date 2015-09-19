@@ -31,7 +31,7 @@ class MailingAdmin(admin.ModelAdmin):
 
 # SUBSCRIBERS
 class SubscribeActionForm(ActionForm):
-    phone = forms.CharField(verbose=u'Номер телефона (11 знаков): ', max_length=11, required=False)
+    phone = forms.CharField(label=u'Номер телефона (11 знаков): ', max_length=11, required=False)
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
