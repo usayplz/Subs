@@ -62,7 +62,7 @@ class SubscriberAdmin(admin.ModelAdmin):
         phone = request.POST['phone']
         mailing = request.POST['mailing']
         if phone and mailing:
-            tasker = dbsmstask.dbSMSTask(db_config, None)
+            tasker = dbsmstask.dbSMSTask(settings.DATABASES['default'], None)
             result = tasker.subscribe(phone, mailing, 'SMS', '4181')
             self.message_user(request, result)
 
