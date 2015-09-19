@@ -37,6 +37,7 @@ class MailingAdmin(admin.ModelAdmin):
 # SUBSCRIBERS
 class SubscribeActionForm(ActionForm):
     phone = forms.CharField(label=u'Номер телефона (11 знаков): ', max_length=11, required=False)
+    mailing = forms.ModelChoiceField(label=u'Рассылка', queryset=Mailing.objects.all())
 
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ('mobnum', 'mailing', 'status', 'create_date', 'subs_time', 'request_id', 'contract_id', 'contract_state',)
