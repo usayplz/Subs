@@ -6,6 +6,7 @@ from django.db import models
 from django import forms
 from django.contrib.admin.helpers import ActionForm
 from daterange_filter.filter import DateRangeFilter
+import sys
 
 sys.path.append('/var/www/subs/')
 from scripts import dbsmstask
