@@ -7,6 +7,9 @@ from django import forms
 from django.contrib.admin.helpers import ActionForm
 from daterange_filter.filter import DateRangeFilter
 
+sys.path.append('/var/www/subs/')
+from scripts import dbsmstask
+
 
 def yarno_url(obj):
     if obj.yrno_location_code:
@@ -53,13 +56,21 @@ class SubscriberAdmin(admin.ModelAdmin):
         return super(SubscriberAdmin, self).changelist_view(request, extra_context)
 
     def action_subscribe(self, request, queryset):
-        for qs in queryset:
-            print qs
+        pass
+        # logging.basicConfig(level=logging.INFO)
+        # logger = logging.getLogger(__name__)
+
+        # tasker = dbsmstask.dbSMSTask(db_config, logger)
+        # print tasker.unsubscribe('79021702030')
+        # print tasker.subscribe('79021702030', 258, 'SMS', '4181')
+
     action_subscribe.short_description = u'Подписать'
 
     def adction_unsubscribe(self, request, queryset):
         for qs in queryset:
-            print qs
+            tasker = dbsmstask.dbSMSTask(db_config, None)
+            tasker.unsubscribe('79021702030')
+
     adction_unsubscribe.short_description = u'Отписать'
 
 # END OF SUBSCRIBERS
