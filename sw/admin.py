@@ -71,7 +71,7 @@ class SubscriberAdmin(admin.ModelAdmin):
     def adction_unsubscribe(self, request, queryset):
         for qs in queryset:
             tasker = dbsmstask.dbSMSTask(settings.DATABASES['default'], None)
-            tasker.unsubscribe('79021702030')
+            tasker.unsubscribe(qs.mobnum)
 
     adction_unsubscribe.short_description = u'Отписать'
 
