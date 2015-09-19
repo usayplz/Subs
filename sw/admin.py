@@ -46,8 +46,9 @@ class SubscriberAdmin(admin.ModelAdmin):
         if 'action' in request.POST and request.POST['action'] == 'action_subscribe':
             if not request.POST.getlist(admin.ACTION_CHECKBOX_NAME):
                 post = request.POST.copy()
-                for u in Subscriber.objects.all()[0]:
+                for u in Subscriber.objects.all():
                     post.update({admin.ACTION_CHECKBOX_NAME: str(u.id)})
+                    break
                 request._set_post(post)
         return super(SubscriberAdmin, self).changelist_view(request, extra_context)
 
