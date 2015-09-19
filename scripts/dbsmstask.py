@@ -299,10 +299,6 @@ class dbSMSTask(object):
                     client = self.rt_connect()
                     contract = client.request('contractState', { "contractID": contract_id })
                     if contract:
-                        if contract > 0:
-                            self.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": contract, "contract_state": 3, })
-                            self.connection.commit()
-                            return contract, 3
                         for c in contract.contracts:
                             if c.contractID == contract_id:
                                 self.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": c.contractID, "contract_state": c.state, })
