@@ -782,7 +782,7 @@ class dbSMSTask(object):
 
     def refill_log(self):
         sql_select = '''
-            select id, mobnum, in_text, out_text, delivery_date, sent_date, status, message_id, error from sw_smstask where delivery_date < NOW() - interval 1 day
+            select id, mobnum, in_text, out_text, delivery_date, sent_date, status, message_id, error from sw_smstask where delivery_date < NOW() - interval 1 day limit 50000
         '''
 
         sql_from_delete = '''
@@ -918,7 +918,8 @@ def test():
 
     tasker = dbSMSTask(db_config, logger)
     # print tasker.get_today_weather(10)
-    print tasker.unsubscribe('79500586318')
+    # print tasker.unsubscribe('79021700986')
+    print tasker.unsubscribe('79500551827')
     #print tasker.subscribe('79500923584', 258, 'SMS', '4181')
 
 def refill():
@@ -930,7 +931,7 @@ def refill():
 
 
 def lastpayment():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     errors = 0

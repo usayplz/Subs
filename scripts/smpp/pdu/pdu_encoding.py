@@ -620,6 +620,12 @@ class NetworkTypeEncoder(IntegerWrapperEncoder):
     encoder = Int1Encoder()
     pduType = pdu_types.NetworkType
 
+class NetworkErrorCodeEncoder(OctetStringEncoder):
+    fieldName = 'network_error_code'
+    nameMap = constants.network_error_code_name_map
+    valueMap = constants.network_error_code_value_map
+    pduType = pdu_types.NetworkErrorCode
+
 class BearerTypeEncoder(IntegerWrapperEncoder):
     fieldName = 'network_type'
     nameMap = constants.bearer_type_name_map
@@ -746,7 +752,7 @@ class OptionEncoder(IEncoder):
             #T.dpf_result: DpfResultEncoder(),
             #T.set_dpf: SetDpfEncoder(),
             T.ms_availability_status: MsAvailabilityStatusEncoder(),
-            #T.network_error_code: NetworkErrorCodeEncoder(),
+            T.network_error_code: NetworkErrorCodeEncoder(self.getLength),
             T.message_payload: OctetStringEncoder(self.getLength),
             T.delivery_failure_reason: DeliveryFailureReasonEncoder(),
             #T.more_messages_to_send: MoreMessagesToSendEncoder(),

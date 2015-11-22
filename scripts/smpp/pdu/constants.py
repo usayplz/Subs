@@ -477,6 +477,14 @@ network_type_name_map = {
 }
 network_type_value_map = dict([(val, key) for (key, val) in network_type_name_map.items()])
 
+network_error_code_name_map = {
+    'ANSI-136': 0x01,
+    'IS-95': 0x02,
+    'GSM': 0x03,
+    'RESERVED': 0x04,
+}
+network_error_code_value_map = dict([(val, key) for (key, val) in network_error_code_name_map.items()])
+
 bearer_type_name_map = {
     'UNKNOWN': 0x00,
     'SMS': 0x01,
