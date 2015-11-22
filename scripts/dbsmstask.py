@@ -929,7 +929,6 @@ def refill():
     tasker = dbSMSTask(db_config, logger)
     tasker.refill_log()
 
-
 def lastpayment():
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -970,26 +969,32 @@ def lastpayment():
 
     tasker.cursor.execute(sql, { })
     subscribers = tasker.cursor.fetchall()
-    for subscriber in subscribers:
-        mobnum, request_id, contract_id, contract_state = subscriber
+
+    SEND_CONTRACT_SIZE = 100
+    for i in xrange(0, len(subscribers), SEND_CONTRACT_SIZE):
+        subs = subscribers[i:i+SEND_CONTRACT_SIZE]
+        contract_ids = [str(x[2]) for x in subs]
+        mobnums_dict = dict((str(contract_id), mobnum) for mobnum, request_id, contract_id, contract_state in subs)
 
         try:
             client = tasker.rt_connect()
-            contract = client.request('contractState', { "contractID": contract_id })
+            contract = client.request('contractState', { "contractID": contract_ids })
             if contract:
                 for c in contract.contracts:
-                    if c.contractID == contract_id:
-                        tasker.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": c.contractID, "contract_state": c.state, })
-                        tasker.connection.commit()
-                        if c.lastPaid:
-                            lastpayment = str(c.lastPaid)[0:10]
-                            tasker.cursor.execute(sql_check_lastpayment, { "mobnum": mobnum, "lastpayment": lastpayment, })
-                            row = tasker.cursor.fetchone()
-                            if row[0] == 0:
-                                tasker.cursor.execute(sql_set_lastpayment, { "mobnum": mobnum, "lastpayment": lastpayment, })
-                                tasker.connection.commit()
+                    mobnum = mobnums_dict[str(c.contractID)]
+                    tasker.cursor.execute(sql_update_contract, { "mobnum": mobnum, "contract_id": c.contractID, "contract_state": c.state, })
+                    tasker.connection.commit()
+                    if c.lastPaid:
+                        lastpayment = str(c.lastPaid)[0:10]
+                        tasker.cursor.execute(sql_check_lastpayment, { "mobnum": mobnum, "lastpayment": lastpayment, })
+                        row = tasker.cursor.fetchone()
+                        if row[0] == 0:
+                            print "insert: ", mobnum
+                            tasker.cursor.execute(sql_set_lastpayment, { "mobnum": mobnum, "lastpayment": lastpayment, })
+                            tasker.connection.commit()
         except Exception, e:
             errors = errors + 1
+
     if errors > 0:
         send_mail('subs@foxthrottle.com', ['usayplz@gmail.com'], 'subs', 'lastpayment. \n\n Errors: %s' % (errors))
 
