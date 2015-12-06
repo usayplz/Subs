@@ -5,7 +5,7 @@ from sw.models import WeatherText
 from datetime import datetime
 
 def index(request):
-	weathers = WeatherText.objects.filter(time_from__lte=datetime.now(), time_to__gte=datetime.now())
+    weathers = WeatherText.objects.filter(time_from__lte=datetime.now(), time_to__gte=datetime.now())
     return render(request, 'sw/index.html', {"weathers": weathers})
 
 def wsdl(request):
