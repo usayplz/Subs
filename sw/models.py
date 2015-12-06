@@ -8,6 +8,7 @@ from datetime import datetime
 class Mailing(models.Model):
     name = models.CharField(_(u'Название рассылки'), db_index=True, max_length=255)
     yrno_location_code = models.CharField(_(u'Идентификатор города yr.no'), max_length=255, null=True, blank=True)
+    timezone = models.CharField(_(u'Часовой пояс'), max_length=10, null=True, blank=True, default="+08:00")
     create_date = models.DateTimeField(_(u'Дата создания'), auto_now_add=True)
 
     def __unicode__(self):

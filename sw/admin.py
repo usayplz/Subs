@@ -22,7 +22,7 @@ yarno_url.allow_tags = True
 
 
 class MailingAdmin(admin.ModelAdmin):
-    list_display = ('name', yarno_url, 'create_date',)
+    list_display = ('name', yarno_url, 'timezone', 'create_date',)
     list_filter = ('name',)
     search_fields = ['name', yarno_url]
     list_per_page = 1000
