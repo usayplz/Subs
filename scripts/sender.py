@@ -82,16 +82,17 @@ class SMPP(object):
                     if len(short_message) > 0:
                         (mailing_id) = self.smstask.get_mailing_id_by_city(short_message)
                         if mailing_id:
-                            self.smstask.subscribe(source_addr, mailing_id, 'SMS', short_message)
+                            subs_answer = self.smstask.subscribe(source_addr, mailing_id, 'SMS', short_message)
                             self.logger.info('FIND CITY (mobnum, mailing_id) = (%s, %s)' % (source_addr, mailing_id))
-                            return
-
-                        set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
-                        if set_time_result != '' and self.smstask.is_subscribe(source_addr) == 1:
-                            out_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
-                            task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
-                            self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
-                            return
+                            if subs_answer == 2:
+                                return
+                        else:
+                            set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
+                            if set_time_result != '' and self.smstask.is_subscribe(source_addr) == 1:
+                                out_text = u'Вы сменили время рассылки погоды на %s' % set_time_result[0:5]
+                                task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
+                                self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
+                                return
 
                     # send message and subscribe
                     (mailing_id, weather) = self.smstask.get_current_weather(source_addr)
