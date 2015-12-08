@@ -82,9 +82,9 @@ class SMPP(object):
                     if len(short_message) > 0:
                         (mailing_id) = self.smstask.get_mailing_id_by_city(short_message)
                         if mailing_id:
-                            subs_answer = self.smstask.subscribe(source_addr, mailing_id, 'SMS', short_message)
+                            subscribe = self.smstask.subscribe(source_addr, mailing_id, 'SMS', short_message)
                             self.logger.info('FIND CITY (mobnum, mailing_id) = (%s, %s)' % (source_addr, mailing_id))
-                            if subs_answer == 2:
+                            if subscribe == 2:
                                 return
                         else:
                             set_time_result = self.smstask.set_time(source_addr, short_message, mailing_id)
@@ -105,7 +105,7 @@ class SMPP(object):
                         out_text = u'Для Вашего нас. пункта нет погоды.'
                         task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)
                         self.send_sms(smpp, source_addr, out_text).addBoth(self.message_sent, task_id)
-                        self.logger.info('ERROR: cannot get weather (id, mobnum, text): %s, %s, %s' % (task_id, source_addr, weather))
+                        self.logger.info('ERROR: cannot get weather (id, mobnum, text, mailing_id): %s, %s, %s' % (task_id, source_addr, weather, mailing_id))
                     else:
                         out_text = u'Нас. пункт не удалось определить. Отправьте смс с названием на 4181.'
                         task_id = self.smstask.add_new_task(source_addr, '###'+short_message, out_text, 1)

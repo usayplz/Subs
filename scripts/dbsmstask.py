@@ -16,6 +16,8 @@ from local_settings import DATABASES
 db_config = DATABASES['default']
 
 class dbSMSTask(object):
+    DEFAULT_TIMEZONE = "+08:00"
+
     def __init__(self, db_config, logger):
         self.db_config = db_config
         self.logger = logger
@@ -568,8 +570,12 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
         except db.Error, e:
             self.raise_error(e)
-            return "+08:00"
-        return row[0]
+            return DEFAULT_TIMEZONE
+        if row:
+            return row[0]
+        else:
+            return DEFAULT_TIMEZONE
+
 
     def _get_timezone_negative(self, mailing_id):
         timezone = self._get_timezone(mailing_id)
