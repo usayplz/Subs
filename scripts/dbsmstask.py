@@ -15,9 +15,8 @@ sys.path.append('/var/www/subs/')
 from local_settings import DATABASES
 db_config = DATABASES['default']
 
+DEFAULT_TIMEZONE = "+08:00"
 class dbSMSTask(object):
-    DEFAULT_TIMEZONE = "+08:00"
-
     def __init__(self, db_config, logger):
         self.db_config = db_config
         self.logger = logger
