@@ -207,6 +207,7 @@ class dbSMSTask(object):
                 self.connection.commit()
                 if row:
                     name, weather, timezone = row
+                    self.logger.info('get_current_weather : (name, weather, timezone) = %s, %s, %s' % (name, weather, timezone))
                     self.cursor.execute(sql1, { 'mailing_id': mailing_id, 'timezone': timezone,})
                     row = self.cursor.fetchone()
                     self.connection.commit()
@@ -218,6 +219,8 @@ class dbSMSTask(object):
 
                     if weather:
                         return mailing_id, (u'%s: %s. Завтра Д %s Н %s' % (name[0:10], weather, max_t1, min_t1))[0:70]
+
+                    self.logger.info('get_current_weather : weather=None, mailing_id=%s' % (mailing_id))
                 return mailing_id, None
             else:
                 return (None, None)
@@ -569,10 +572,12 @@ class dbSMSTask(object):
             row = self.cursor.fetchone()
         except db.Error, e:
             self.raise_error(e)
+            self.logger.info('_get_timezone : exception : using default timezone')
             return DEFAULT_TIMEZONE
         if row:
             return row[0]
         else:
+            self.logger.info('_get_timezone : error row=None : using default timezone')
             return DEFAULT_TIMEZONE
 
 
