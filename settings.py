@@ -6,8 +6,10 @@ def rel(*x):
 
 PRODUCTION_SERVER = 'wwwsubs.ru'
 
-DEBUG = socket.gethostname() != PRODUCTION_SERVER
+DEBUG = False # socket.gethostname() != PRODUCTION_SERVER
 TEMPLATE_DEBUG = DEBUG
+
+ALLOWED_HOSTS = ['*']
 
 ADMINS = (
     ('admin', 'admin@wwwsubs.ru.ru'),

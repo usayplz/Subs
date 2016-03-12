@@ -962,8 +962,8 @@ def test():
     tasker = dbSMSTask(db_config, logger)
     # print tasker.get_today_weather(10)
     # print tasker.unsubscribe('79021700986')
-    print tasker.unsubscribe('79500551827')
-    #print tasker.subscribe('79500923584', 258, 'SMS', '4181')
+    print tasker.unsubscribe('79526134029')
+    #print tasker.subscribe('79025765159', 60, 'SMS', '4181')
 
 def refill():
     logging.basicConfig(level=logging.DEBUG)
